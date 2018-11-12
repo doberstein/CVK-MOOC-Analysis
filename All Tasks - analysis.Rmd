@@ -1,0 +1,39 @@
+---
+title: "CVK MOOC Analysis All Tasks"
+output: html_notebook
+---
+
+```{r}
+library(purrr)
+library(tidyr)
+library(jsonlite)
+library(dplyr)
+library(ngram)
+library(anytime)
+library(ggplot2)
+library(compare)
+library(reldist)
+library(rmarkdown)
+```
+
+
+```{r}
+## READ DATA ##
+## TASK 1
+task1_changing_gini <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_changing_gini.csv", stringsAsFactors = F) %>% 
+  subset(select = -X)
+task1_changing_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_changing_activity_count.csv", stringsAsFactors = F) %>% 
+  subset(select = -X)
+task1_changing_wiki_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_changing_wiki_activity_count.csv", stringsAsFactors = F) %>% 
+  subset(select = -X)
+
+## TASK 2
+task2_changing_gini <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_changing_gini.csv", stringsAsFactors = F) %>% 
+  subset(select = -X)
+task2_changing_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_changing_activity_count.csv", stringsAsFactors = F) %>% 
+  subset(select = -X)
+task2_changing_wiki_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_changing_wiki_activity_count.csv", stringsAsFactors = F) %>% 
+  subset(select = -X)
+
+```
+
