@@ -36,6 +36,9 @@ addConditions <- function(df) {
     df$condition[df$group_id %in% c(160:165)] <- "M"
     df$condition[df$group_id %in% c(166:171)] <- "MG"
     df$condition[df$group_id %in% c(172:174)] <- "KR"
+    df$condition[df$group_id %in% c(187:192)] <- "Ko"
+    df$condition[df$group_id %in% c(193:197)] <- "M"
+    df$condition[df$group_id %in% c(198:202)] <- "MG"
   }
   
   df
@@ -601,24 +604,6 @@ gini_day14 <- all_wordcounts_day14 %>%
   group_by(group_id) %>% 
   summarise(gini_index = gini(wordcount)*length(wordcount)/(length(wordcount)-1))
 
-
-# changing_gini <- gini_day1
-# changing_gini$day2 <- gini_day2$gini_index
-# changing_gini$day3 <- gini_day3$gini_index
-# changing_gini$day4 <- gini_day4$gini_index
-# changing_gini$day5 <- gini_day5$gini_index
-# changing_gini$day6 <- gini_day6$gini_index
-# changing_gini$day7 <- gini_day7$gini_index
-# changing_gini$day8 <- gini_day8$gini_index
-# changing_gini$day9 <- gini_day9$gini_index
-# changing_gini$day10 <- gini_day10$gini_index
-# changing_gini$day11 <- gini_day11$gini_index
-# changing_gini$day12 <- gini_day12$gini_index
-# changing_gini$day13 <- gini_day13$gini_index
-# changing_gini$day14 <- gini_day14$gini_index
-# 
-# names(changing_gini)[names(changing_gini) == 'gini_index'] <- 'day1'
-
 changing_gini <- gini_day1
 changing_gini$period = 1
 
@@ -637,6 +622,9 @@ changing_gini <- addValues(changing_gini, gini_day13, 13)
 changing_gini <- addValues(changing_gini, gini_day14, 14)
 
 changing_gini <- addConditions(changing_gini)
+
+#write.csv2(changing_gini, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_changing_gini.csv")
+
 
 ```
 
@@ -688,7 +676,7 @@ changing_activity_count <- addValues(changing_activity_count, activity_counts_da
 changing_activity_count <- addValues(changing_activity_count, activity_counts_day13, 13)
 changing_activity_count <- addValues(changing_activity_count, activity_counts_day14, 14)
 
-changing_gini <- addConditions(changing_gini)
+#write.csv2(changing_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_changing_activity_count.csv")
 
 
 ```
@@ -805,33 +793,47 @@ ggplot(work_distribution_for_condition, aes(x=period, y=average_gini, group=cond
 # filter sub-sequences to only contain relevant activities (timewise) in wiki
 
 wiki_seq_day1 <- sequences %>% 
-  filter(period <= 1 & type == "wiki") 
+  filter(type == "wiki") %>% 
+  filter(period <= 1) 
 wiki_seq_day2 <- sequences %>% 
-  filter(period <= 2 & type == "wiki")
+  filter(type == "wiki") %>% 
+  filter(period <= 2)
 wiki_seq_day3 <- sequences %>% 
-  filter(period <= 3 & type == "wiki")
+  filter(type == "wiki") %>%
+  filter(period <= 3)
 wiki_seq_day4 <- sequences %>% 
-  filter(period <= 4 & type == "wiki")
+  filter(type == "wiki") %>%
+  filter(period <= 4)
 wiki_seq_day5 <- sequences %>% 
-  filter(period <= 5 & type == "wiki")
-wiki_seq_day6 <- sequences %>% 
-  filter(period <= 6 & type == "wiki")
-wiki_seq_day7 <- sequences %>% 
-  filter(period <= 7 & type == "wiki")
-wiki_seq_day8 <- sequences %>% 
-  filter(period <= 8 & type == "wiki")
-wiki_seq_day9 <- sequences %>% 
-  filter(period <= 9 & type == "wiki")
-wiki_seq_day10 <- sequences %>% 
-  filter(period <= 10 & type == "wiki")
-wiki_seq_day11 <- sequences %>% 
-  filter(period <= 11 & type == "wiki")
-wiki_seq_day12 <- sequences %>% 
-  filter(period <= 12 & type == "wiki")
-wiki_seq_day13 <- sequences %>% 
-  filter(period <= 13 & type == "wiki")
-wiki_seq_day14 <- sequences %>% 
-  filter(period <= 14 & type == "wiki")
+  filter(type == "wiki") %>%
+  filter(period <= 5)
+wiki_seq_day6 <- sequences %>%
+  filter(type == "wiki") %>%
+  filter(period <= 6)
+wiki_seq_day7 <- sequences %>%
+  filter(type == "wiki") %>%
+  filter(period <= 7)
+wiki_seq_day8 <- sequences %>%
+  filter(type == "wiki") %>%
+  filter(period <= 8)
+wiki_seq_day9 <- sequences %>%
+  filter(type == "wiki") %>%
+  filter(period <= 9)
+wiki_seq_day10 <- sequences %>%
+  filter(type == "wiki") %>%
+  filter(period <= 10)
+wiki_seq_day11 <- sequences %>%
+  filter(type == "wiki") %>%
+  filter(period <= 11)
+wiki_seq_day12 <- sequences %>%
+  filter(type == "wiki") %>%
+  filter(period <= 12)
+wiki_seq_day13 <- sequences %>%
+  filter(type == "wiki") %>%
+  filter(period <= 13)
+wiki_seq_day14 <- sequences %>%
+  filter(type == "wiki") %>%
+  filter(period <= 14)
 ```
 
 
@@ -869,24 +871,32 @@ wiki_activity_counts_day14 <- calculateActivityCount(wiki_seq_day14) %>%
 changing_wiki_activity_count <- NULL
 
 if (nrow(wiki_activity_counts_day1) > 0) {
-  print("1")
-  #browser()
   changing_wiki_activity_count <- wiki_activity_counts_day1
   changing_wiki_activity_count$period = 1
 } else if (nrow(wiki_activity_counts_day2) > 0) {
-  print("2")
-  #browser()
   changing_wiki_activity_count <- wiki_activity_counts_day2
   changing_wiki_activity_count$period = 2
+} else if (nrow(wiki_activity_counts_day3) > 0) {
+  changing_wiki_activity_count <- wiki_activity_counts_day3
+  changing_wiki_activity_count$period = 3
 }
 
-if (nrow(wiki_activity_counts_day1) == 0) {
-  changing_activity_count <- addValues(changing_activity_count, activity_counts_day2, 2)
+
+if (nrow(wiki_activity_counts_day1) > 0) {
+  changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day2, 2)
+}
+
+if (nrow(wiki_activity_counts_day1) == 0 && nrow(wiki_activity_counts_day2) > 0) {
+  changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day3, 3)
+  changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day4, 4)
+}
+
+if ((nrow(wiki_activity_counts_day1) == 0) && (nrow(wiki_activity_counts_day2) == 0) && (nrow(wiki_activity_counts_day3) > 0)) {
+  changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day4, 4)
 }
 
 
-changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day3, 3)
-changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day4, 4)
+
 changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day5, 5)
 changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day6, 6)
 changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day7, 7)
@@ -897,6 +907,8 @@ changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_act
 changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day12, 12)
 changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day13, 13)
 changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day14, 14)
+
+#write.csv2(changing_wiki_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_changing_wiki_activity_count.csv")
 
 ```
 
@@ -917,3 +929,9 @@ ggplot(wiki_activity_distribution_for_condition, aes(x=period, y=accum_wiki_acti
   scale_x_continuous(labels = days, breaks = c(1:14))
 
 ```
+
+## CLOSTER LOOK AT END OF GROUPTASK
+```{r}
+
+```
+
