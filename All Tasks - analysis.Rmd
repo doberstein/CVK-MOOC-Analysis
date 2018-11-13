@@ -18,22 +18,90 @@ library(rmarkdown)
 
 
 ```{r}
+### MISC ###
+############
+
+days <- c("Mo", "Di","Mi","Do","Fr","Sa","So","Mo","Di","Mi","Do","Fr","Sa","So")
+
+```
+
+
+
+```{r}
 ## READ DATA ##
+###############
+
 ## TASK 1
 task1_changing_gini <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_changing_gini.csv", stringsAsFactors = F) %>% 
-  subset(select = -X)
-task1_changing_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_changing_activity_count.csv", stringsAsFactors = F) %>% 
-  subset(select = -X)
+  subset(select = -X) %>%
+  filter(condition %in% c("Ko", "M", "MG"))
+
+task1_changing_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_changing_activity_count.csv", stringsAsFactors = F) %>%
+  subset(select = -X) %>%
+  filter(condition %in% c("Ko", "M", "MG"))
+
 task1_changing_wiki_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_changing_wiki_activity_count.csv", stringsAsFactors = F) %>% 
-  subset(select = -X)
+  subset(select = -X) %>%
+  filter(condition %in% c("Ko", "M", "MG"))
 
 ## TASK 2
 task2_changing_gini <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_changing_gini.csv", stringsAsFactors = F) %>% 
   subset(select = -X)
-task2_changing_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_changing_activity_count.csv", stringsAsFactors = F) %>% 
+
+task2_changing_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_changing_activity_count.csv", stringsAsFactors = F) %>%
   subset(select = -X)
+
 task2_changing_wiki_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_changing_wiki_activity_count.csv", stringsAsFactors = F) %>% 
   subset(select = -X)
+
+```
+
+
+```{r}
+### MERGE DATA FOR TASKS ###
+############################
+
+all_changing_activity_count <- rbind(task1_changing_activity_count, task2_changing_activity_count)
+
+all_changing_gini <- rbind(task1_changing_gini, task2_changing_gini)
+
+```
+
+## ACTIVITY DISTRIBUTION OVER DAYS BY CONDITION
+```{r}
+all_activity_distribution_for_condition <- all_changing_activity_count %>% 
+  group_by(period) %>% 
+  group_by(condition, add = T) %>% 
+  summarise(accum_activity_count = sum(activity_count))
+```
+
+```{r}
+ggplot(all_activity_distribution_for_condition, aes(x=period, y=accum_activity_count, group=condition)) +
+  geom_line(aes(color=condition))+
+  geom_point(aes(color=condition))+
+  scale_x_continuous(labels = days, breaks = c(1:14))
+
+```
+
+
+## WORKDISTRIBUTION OVER DAYS BY CONDITION
+```{r}
+all_work_distribution_for_condition <- all_changing_gini %>% 
+  filter(!is.na(gini_index)) %>% 
+  group_by(period) %>% 
+  group_by(condition, add = T) %>% 
+  summarise(average_gini = mean(gini_index), sd = sd(gini_index))
+```
+
+```{r}
+ggplot(all_work_distribution_for_condition, aes(x=period, y=average_gini, group=condition)) +
+  geom_line(aes(color=condition))+
+  geom_point(aes(color=condition))+
+  scale_x_continuous(labels = days, breaks = c(1:14))
+
+```
+```{r}
+
 
 ```
 
