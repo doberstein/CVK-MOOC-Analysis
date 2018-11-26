@@ -1,0 +1,911 @@
+---
+title: "CVK MOOC Analysis Task3"
+output: html_notebook
+---
+
+```{r}
+source("setup.R")
+source("util.R")
+```
+
+
+```{r}
+### RENDER NOTEBOOK
+#render("analysis.Rmd", output_file = "analysis_task1.html")
+```
+
+###TODO for new task:
+####read new files
+####adjust condition information
+####adjust start date (task_begin <- as.Date(...))
+
+
+### READ DATA, GENERATE DATASET
+```{r}
+### ONCE ###
+
+# complete final models with content for each condition
+data_Ko <- fromJSON("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/Task 3/Task3_Brainstorming_Ko_content.txt")
+data_M <- fromJSON("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/Task 3/Task3_Brainstorming_M_content.txt")
+data_MG <- fromJSON("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/Task 3/Task3_Brainstorming_MG_content.txt")
+
+
+### SEQUENCES ###
+# unnest sequences from lists to data.frame
+sequences_Ko <- data_Ko$group_sequences %>%
+  unnest()
+sequences_M <- data_M$group_sequences %>%
+  unnest()
+sequences_MG <- data_MG$group_sequences %>%
+  unnest()
+
+# combine all files to a single table
+sequences <- bind_rows(list(sequences_Ko, sequences_M, sequences_MG))
+
+write.csv2(sequences, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_activities.csv")
+
+### WORK IMBALANCE ###
+# extract work imbalances
+work_imbalance_Ko <- data_Ko$work_imbalance
+work_imbalance_M <- data_M$work_imbalance
+work_imbalance_MG <- data_MG$work_imbalance
+
+# combine all files to a single table
+work_imbalances <- bind_rows(list(work_imbalance_Ko, work_imbalance_M, work_imbalance_MG))
+
+# adding condition information #
+work_imbalances <- addConditions(work_imbalances)
+
+
+
+write.csv2(work_imbalances, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_work_imbalances.csv")
+
+### FINAL WIKI WORD COUNTS ###
+wordcount_wiki_Ko <- data_Ko$text_contributions_wiki %>%
+  unnest()
+wordcount_wiki_M <- data_M$text_contributions_wiki %>%
+  unnest()
+wordcount_wiki_MG <- data_MG$text_contributions_wiki %>%
+  unnest()
+
+# combine all files to a single table
+wiki_wordcounts <- bind_rows(list(wordcount_wiki_Ko, wordcount_wiki_M, wordcount_wiki_MG)) %>%
+  addConditions()
+
+write.csv2(wiki_wordcounts, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_wiki_wordcounts.csv")
+
+### FINAL Forum WORD COUNTS ###
+wordcount_forum_Ko <- data_Ko$text_contributions_forum %>%
+  unnest()
+wordcount_forum_M <- data_M$text_contributions_forum %>%
+  unnest()
+wordcount_forum_MG <- data_MG$text_contributions_forum %>%
+  unnest()
+
+# combine all files to a single table
+forum_wordcounts <- bind_rows(list(wordcount_forum_Ko, wordcount_forum_M, wordcount_forum_MG)) %>%
+  addConditions()
+
+write.csv2(forum_wordcounts, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_forum_wordcounts.csv")
+
+# extract groups and users
+users_groups_Ko <- data_Ko$model_metadata$groups %>%
+  unnest()
+users_groups_M <- data_M$model_metadata$groups %>%
+  unnest()
+users_groups_MG <- data_MG$model_metadata$groups %>%
+  unnest()
+
+# combine all files to a single table
+groups_and_users <- bind_rows(list(users_groups_Ko, users_groups_M, users_groups_MG)) %>%
+  subset(select = c("group_id", "name"))
+names(groups_and_users)[names(groups_and_users) == 'name'] <- 'user_id'
+
+groups_and_users <- addConditions(groups_and_users)
+
+
+write.csv2(groups_and_users, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_groups_and_users.csv")
+
+```
+
+### DATA PREPROCESSING: WIKI WORDCOUNT CALCULATION
+```{r}
+### ONCE ###
+sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_activities.csv", stringsAsFactors = F) %>%
+  subset(select=-X) %>%
+  rowwise() %>%
+  mutate(content = gsub("\n", " ", content)) %>%  # delete newlines
+  mutate(wordcount = wordcount(content))  # calculate wordcount
+
+### FORUM DATA ###
+forum_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/replied")
+
+### WIKI DATA ###
+
+wiki_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/updated") %>%
+  group_by(group_id) %>%
+  arrange(timestamp, .by_group = T) %>%
+  mutate(textchange = wordcount - lag(wordcount)) # calculate textchange as difference between current and last revision
+
+# correct value for first revisions (since textchange for first posts are "NA")
+firstRevisions <- is.na(wiki_data$textchange)
+wiki_data$textchange[firstRevisions] <- wiki_data$wordcount[firstRevisions]
+
+# correct value for revisions that are shorter than the last on (change negative numbers to 0)
+negativeWordcounts <- wiki_data$textchange < 0
+length(which(negativeWordcounts[negativeWordcounts==TRUE]))
+wiki_data$textchange[negativeWordcounts] <- 0
+
+# replace 'wordcount' with 'textchange'
+wiki_data <- wiki_data %>%
+  subset(select = - wordcount)
+
+names(wiki_data)[names(wiki_data) == 'textchange'] <- 'wordcount'
+
+### Analyze together ###
+sequences2 <- bind_rows(list(forum_data, wiki_data)) %>%
+  group_by(group_id) %>%
+  arrange(timestamp, .by_group = T)
+
+write.csv2(sequences2, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_activities.csv")
+
+### find largest deletes: wiki post with highest negative wordcount ###
+# wiki_data2 <- wiki_data2 %>%
+#   arrange(textchange)
+#
+# ind <- which(wiki_data2$textchange == -460)
+# rows <- lapply(ind, function(wiki_data2) (wiki_data2-5):(wiki_data2+5))
+# # With unlist() you get all relevant rows
+# d1 <- wiki_data2[unlist(rows),]
+
+# ### *** test wordcount calc ###
+# s1 <- sequences %>%
+#   arrange(timestamp) %>%
+#   #filter(verb_id == "http://id.tincanapi.com/verb/updated")
+#   filter(verb_id == "http://id.tincanapi.com/verb/replied")
+#
+# s2 <- sequences2 %>%
+#   arrange(timestamp) %>%
+#   #filter(verb_id == "http://id.tincanapi.com/verb/updated")
+#   filter(verb_id == "http://id.tincanapi.com/verb/replied")
+```
+
+### READ PREPROCESSED DATASET; ADD EXPERIMANTAL CONDITIONS TO GROUPS; ADD DATE TO ACTIVITIES
+
+```{r}
+### READ DATA ###
+sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_activities.csv", stringsAsFactors = F) %>% 
+  subset(select=-X) %>% 
+  addConditions()
+
+
+### adding dates as days
+### adding period (first day = 1; last day = 14)
+### adding type (forum, wiki)
+
+task_begin <- as.Date("2018-11-12")
+
+sequences <- sequences %>% 
+  mutate(day = anydate(timestamp)) %>% 
+  mutate(period = as.numeric(anydate(timestamp) - task_begin)+1) %>% 
+  mutate(type = ifelse(object_type == "http://id.tincanapi.com/activitytype/forum-topic", "forum", "wiki"))
+
+### write data with day, period and time
+write.csv2(sequences, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_activities_2.csv")
+  
+
+### FORUM DATA ###
+forum_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/replied")
+
+### WIKI DATA ###
+
+wiki_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/updated")
+```
+
+
+
+# BASIC STATS 
+```{r}
+### (MEAN, SD, ...)
+```
+
+<!-- <span style="color:blue">IKARion MOOC 2:1; MERCUR MOOC 3:1</span> -->
+
+### Average wordcount for wiki activities
+```{r}
+mean(wiki_data$wordcount)
+```
+
+### Average wordcount for forum activities
+```{r}
+mean(forum_data$wordcount)
+```
+
+```{r}
+# # stats for wiki data
+# median(wiki_data$wordcount)
+# sd(wiki_data$wordcount)
+# 
+# # stats for forum data
+# median(forum_data$wordcount)
+# sd(forum_data$wordcount)
+# 
+# # number of activities per group
+# activity_count <- sequences %>%
+#   group_by(group_id) %>%
+#   summarise(activity_count = n())
+
+```
+
+# ACTIVITY COUNT FOR CONDITION
+##<span style="color:red">Ko = Kontrollgruppe</span>
+
+##<span style="color:red">M = Mirroring</span>
+
+##<span style="color:red">MG = Mirroring&Guiding</span>
+
+<span style="color:blue">M, M&G more active than Ko, high sd</span>
+```{r}
+
+cond_activity_count <- sequences %>% 
+  group_by(group_id) %>% 
+  summarise(activity_count = n()) %>% 
+  addConditions()
+
+cond_activity_count <- cond_activity_count %>% 
+  group_by(condition) %>% 
+  summarise(average_activity_count = mean(activity_count), sd = sd(activity_count))
+
+cond_activity_count
+```
+
+```{r}
+ggplot(data=cond_activity_count, aes(x=condition, y=average_activity_count)) +
+  geom_bar(stat="identity", ,fill="steelblue") + 
+  geom_errorbar(aes(ymin=average_activity_count-sd, ymax=average_activity_count+sd), width=.2,
+                 position=position_dodge(.9))
+```
+
+# WORDCOUNT IN FINAL WIKI REVISIONS
+<span style="color:blue">Ko highest wordcount, all groups (but one) above minimum</span>
+```{r}
+wiki_wordcount <- wiki_data %>% 
+  group_by(group_id) %>% 
+  slice(c(n())) %>%
+  ungroup() %>% 
+  dplyr::rowwise() %>% 
+  mutate(wordcount = wordcount(content))
+
+# mean(wiki_wordcount$wordcount)
+# median(wiki_wordcount$wordcount)
+# sd(wiki_wordcount$wordcount)
+
+
+wordcount_by_condition <- wiki_wordcount %>% 
+  group_by(condition) %>% 
+  summarise(average_wordcount = mean(wordcount), sd = sd(wordcount), max = max(wordcount), min = min(wordcount))
+
+wordcount_by_condition
+```
+```{r}
+ggplot(data=wordcount_by_condition, aes(x=condition, y=average_wordcount)) +
+  geom_bar(stat="identity",fill="steelblue") + 
+  geom_errorbar(aes(ymin=average_wordcount-sd, ymax=average_wordcount+sd), width=.2,
+                 position=position_dodge(.9))
+```
+
+
+```{r}
+## ACTIVITY DISTRIBUTION OVER DAYS
+activity_distribution <- sequences %>% 
+  group_by(period) %>% 
+  summarise(activities_per_day = n())
+```
+
+
+
+```{r}
+days <- c("Mo", "Di","Mi","Do","Fr","Sa","So","Mo","Di","Mi","Do","Fr","Sa","So")
+
+p <- ggplot(data=activity_distribution, aes(x=period, y=activities_per_day)) +
+  geom_bar(stat="identity",fill="steelblue")+
+  #geom_text(aes(label=activities_per_day), vjust=1.6, color="white", size=3.5)+ # inside bars
+  geom_text(aes(label=activities_per_day), vjust=-0.3, size=3.5)+
+  scale_x_continuous(labels = days, breaks = c(1:14))+
+  theme_minimal()
+
+#p
+
+#ggsave("activity_distribution.png")
+
+```
+
+# ACTIVITY DISTRIBUTION OVER DAYS BY TYPE
+<span style="color:blue">beginning week 2: spike in forum activity</span>
+<span style="color:blue">towards the deadline: spike in wiki activity</span>
+```{r}
+activity_distribution_for_type <- sequences %>% 
+  group_by(period) %>% 
+  group_by(type, add = T) %>% 
+  summarise(activities_per_day = n())
+```
+
+```{r}
+ggplot(data=activity_distribution_for_type, aes(x=period, y=activities_per_day, fill = type)) +
+  geom_bar(stat="identity")+
+  #geom_text(aes(label=activities_per_day), vjust=1.6, color="white", size=3.5)+ # inside bars
+  #geom_text(aes(label=activities_per_day), vjust=-0.3, size=3.5)+
+  #geom_text(aes(y=label_ypos, label=activities_per_day), vjust=1.6, color="white", size=3.5)+
+  scale_fill_brewer(palette="Set1")+
+  scale_x_continuous(labels = days, breaks = c(1:14))+
+  theme_minimal()
+
+#ggsave("activity_distribution_for_type.png")
+```
+
+# ACTIVITY DISTRIBUTION OVER DAYS BY CONDITION
+<!-- <span style="color:blue">spike in MG on the last day</span> -->
+<!-- <span style="color:blue"></span> -->
+```{r}
+activity_distribution_for_condition <- sequences %>% 
+  group_by(period) %>% 
+  group_by(condition, add = T) %>% 
+  summarise(activities_per_day = n())
+```
+
+```{r}
+ggplot(data=activity_distribution_for_condition, aes(x=period, y=activities_per_day, fill = condition)) +
+  geom_bar(stat="identity")+
+  #geom_text(aes(label=activities_per_day), vjust=1.6, color="white", size=3.5)+ # inside bars
+  #geom_text(aes(label=activities_per_day), vjust=-0.3, size=3.5)+
+  #geom_text(aes(y=label_ypos, label=activities_per_day), vjust=1.6, color="white", size=3.5)+
+  scale_fill_brewer(palette="Set1")+
+  scale_x_continuous(labels = days, breaks = c(1:14))+
+  theme_minimal()
+
+#ggsave("activity_distribution_for_type.png")
+```
+
+```{r}
+p <- ggplot(data=activity_distribution_for_condition, aes(x=period, y=activities_per_day, fill = condition)) +
+  geom_bar(stat="identity",position=position_dodge() )+
+  #geom_text(aes(label=activities_per_day), vjust=1.6, color="white", size=3.5)+ # inside bars
+  #geom_text(aes(label=activities_per_day), vjust=-0.3, size=3.5)+
+  #geom_text(aes(y=label_ypos, label=activities_per_day), vjust=1.6, color="white", size=3.5)+
+  scale_fill_brewer(palette="Set1")+
+  scale_x_continuous(labels = days, breaks = c(1:14))+
+  theme_minimal()
+
+#p
+```
+
+
+```{r}
+# ggplot(data=activity_distribution_for_type, aes(x=period, y=activities_per_day, fill = type)) +
+#   geom_bar(stat="identity")+
+#   #geom_text(aes(label=activities_per_day), vjust=1.6, color="white", size=3.5)+ # inside bars
+#   #geom_text(aes(label=activities_per_day), vjust=-0.3, size=3.5)+
+#   #geom_text(aes(y=label_ypos, label=activities_per_day), vjust=1.6, color="white", size=3.5)+
+#   scale_fill_brewer(palette="Set1")+
+#   scale_x_continuous(labels = days, breaks = c(1:14))+
+#   theme_minimal() + 
+#   coord_polar()
+```
+
+```{r}
+### READ DATA ###
+task3_work_imbalance <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_work_imbalances.csv", stringsAsFactors = F) %>% 
+  subset(select=-X)
+task3_wiki_wordcounts <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_wiki_wordcounts.csv", stringsAsFactors = F) %>% 
+  subset(select=-X)
+task3_forum_wordcounts <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_forum_wordcounts.csv", stringsAsFactors = F) %>% 
+  subset(select=-X)
+```
+
+```{r}
+wiki_wordcounts <- task3_wiki_wordcounts
+names(wiki_wordcounts)[names(wiki_wordcounts) == 'user_wordcount'] <- 'wiki_wordcount'
+
+forum_wordcounts <- task3_forum_wordcounts
+names(forum_wordcounts)[names(forum_wordcounts) == 'user_wordcount'] <- 'forum_wordcount'
+
+task3_wordcounts <- merge(wiki_wordcounts, forum_wordcounts, by = c("user_id", "group_id", "condition")) %>% 
+  rowwise() %>% 
+  mutate(overall_wordcount = sum(wiki_wordcount, forum_wordcount))
+
+```
+
+```{r}
+### GINI INDEX OVER TIME
+
+# filter sub-sequences to only contain relevant activities (timewise)
+seq_day1 <- sequences %>% 
+  filter(period <= 1)
+seq_day2 <- sequences %>% 
+  filter(period <= 2)
+seq_day3 <- sequences %>% 
+  filter(period <= 3)
+seq_day4 <- sequences %>% 
+  filter(period <= 4)
+seq_day5 <- sequences %>% 
+  filter(period <= 5)
+seq_day6 <- sequences %>% 
+  filter(period <= 6)
+seq_day7 <- sequences %>% 
+  filter(period <= 7)
+seq_day8 <- sequences %>% 
+  filter(period <= 8)
+seq_day9 <- sequences %>% 
+  filter(period <= 9)
+seq_day10 <- sequences %>% 
+  filter(period <= 10)
+seq_day11 <- sequences %>% 
+  filter(period <= 11)
+seq_day12 <- sequences %>% 
+  filter(period <= 12)
+seq_day13 <- sequences %>% 
+  filter(period <= 13)
+seq_day14 <- sequences %>% 
+  filter(period <= 14)
+
+
+wordcounts_day1 <- calculateWordcount(seq_day1) %>% 
+  addConditions()
+wordcounts_day2 <- calculateWordcount(seq_day2)%>% 
+  addConditions()
+wordcounts_day3 <- calculateWordcount(seq_day3)%>% 
+  addConditions()
+wordcounts_day4 <- calculateWordcount(seq_day4)%>% 
+  addConditions()
+wordcounts_day5 <- calculateWordcount(seq_day5)%>% 
+  addConditions()
+wordcounts_day6 <- calculateWordcount(seq_day6)%>% 
+  addConditions()
+wordcounts_day7 <- calculateWordcount(seq_day7)%>% 
+  addConditions()
+wordcounts_day8 <- calculateWordcount(seq_day8)%>% 
+  addConditions()
+wordcounts_day9 <- calculateWordcount(seq_day9)%>% 
+  addConditions()
+wordcounts_day10 <- calculateWordcount(seq_day10)%>% 
+  addConditions()
+wordcounts_day11 <- calculateWordcount(seq_day11)%>% 
+  addConditions()
+wordcounts_day12 <- calculateWordcount(seq_day12)%>% 
+  addConditions()
+wordcounts_day13 <- calculateWordcount(seq_day13)%>% 
+  addConditions()
+wordcounts_day14 <- calculateWordcount(seq_day14)%>% 
+  addConditions()
+
+# add inactive users with wordcount = 0
+# get groups and users
+groups_and_users <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_groups_and_users.csv", stringsAsFactors = F) %>% 
+  subset(select = -X) %>%
+  mutate(wordcount = 0)
+
+# add user that unenrolled from course: xznJc2qD3s60qjB6Mazeng==
+# users appears in work_balance, wiki and forum wordcount + sequence but not in group in metadata
+#groups_and_users[nrow(groups_and_users) + 1,] = list(165, "xznJc2qD3s60qjB6Mazeng==", "M", 0)
+
+missing_day1 <- anti_join(groups_and_users, wordcounts_day1, by = c("group_id", "user_id", "condition"))
+missing_day2 <- anti_join(groups_and_users, wordcounts_day2, by = c("group_id", "user_id", "condition"))
+missing_day3 <- anti_join(groups_and_users, wordcounts_day3, by = c("group_id", "user_id", "condition"))
+missing_day4 <- anti_join(groups_and_users, wordcounts_day4, by = c("group_id", "user_id", "condition"))
+missing_day5 <- anti_join(groups_and_users, wordcounts_day5, by = c("group_id", "user_id", "condition"))
+missing_day6 <- anti_join(groups_and_users, wordcounts_day6, by = c("group_id", "user_id", "condition"))
+missing_day7 <- anti_join(groups_and_users, wordcounts_day7, by = c("group_id", "user_id", "condition"))
+missing_day8 <- anti_join(groups_and_users, wordcounts_day8, by = c("group_id", "user_id", "condition"))
+missing_day9 <- anti_join(groups_and_users, wordcounts_day9, by = c("group_id", "user_id", "condition"))
+missing_day10 <- anti_join(groups_and_users, wordcounts_day10, by = c("group_id", "user_id", "condition"))
+missing_day11 <- anti_join(groups_and_users, wordcounts_day11, by = c("group_id", "user_id", "condition"))
+missing_day12 <- anti_join(groups_and_users, wordcounts_day12, by = c("group_id", "user_id", "condition"))
+missing_day13 <- anti_join(groups_and_users, wordcounts_day13, by = c("group_id", "user_id", "condition"))
+missing_day14 <- anti_join(groups_and_users, wordcounts_day14, by = c("group_id", "user_id", "condition"))
+
+all_wordcounts_day1 <- full_join(missing_day1, wordcounts_day1, by = c("group_id", "user_id", "condition", "wordcount"))
+all_wordcounts_day2 <- full_join(missing_day2, wordcounts_day2, by = c("group_id", "user_id", "condition", "wordcount"))
+all_wordcounts_day3 <- full_join(missing_day3, wordcounts_day3, by = c("group_id", "user_id", "condition", "wordcount"))
+all_wordcounts_day4 <- full_join(missing_day4, wordcounts_day4, by = c("group_id", "user_id", "condition", "wordcount"))
+all_wordcounts_day5 <- full_join(missing_day5, wordcounts_day5, by = c("group_id", "user_id", "condition", "wordcount"))
+all_wordcounts_day6 <- full_join(missing_day6, wordcounts_day6, by = c("group_id", "user_id", "condition", "wordcount"))
+all_wordcounts_day7 <- full_join(missing_day7, wordcounts_day7, by = c("group_id", "user_id", "condition", "wordcount"))
+all_wordcounts_day8 <- full_join(missing_day8, wordcounts_day8, by = c("group_id", "user_id", "condition", "wordcount"))
+all_wordcounts_day9 <- full_join(missing_day9, wordcounts_day9, by = c("group_id", "user_id", "condition", "wordcount"))
+all_wordcounts_day10 <- full_join(missing_day10, wordcounts_day10, by = c("group_id", "user_id", "condition", "wordcount"))
+all_wordcounts_day11 <- full_join(missing_day11, wordcounts_day11, by = c("group_id", "user_id", "condition", "wordcount"))
+all_wordcounts_day12 <- full_join(missing_day12, wordcounts_day12, by = c("group_id", "user_id", "condition", "wordcount"))
+all_wordcounts_day13 <- full_join(missing_day13, wordcounts_day13, by = c("group_id", "user_id", "condition", "wordcount"))
+all_wordcounts_day14 <- full_join(missing_day14, wordcounts_day14, by = c("group_id", "user_id", "condition", "wordcount"))
+
+# calculate gini_coefficients for each day
+gini_day1 <- all_wordcounts_day1 %>% 
+  group_by(group_id) %>% 
+  summarise(gini_index = gini(wordcount)*length(wordcount)/(length(wordcount)-1))
+gini_day2 <- all_wordcounts_day2 %>% 
+  group_by(group_id) %>% 
+  summarise(gini_index = gini(wordcount)*length(wordcount)/(length(wordcount)-1))
+gini_day3 <- all_wordcounts_day3 %>% 
+  group_by(group_id) %>% 
+  summarise(gini_index = gini(wordcount)*length(wordcount)/(length(wordcount)-1))
+gini_day4 <- all_wordcounts_day4 %>% 
+  group_by(group_id) %>% 
+  summarise(gini_index = gini(wordcount)*length(wordcount)/(length(wordcount)-1))
+gini_day5 <- all_wordcounts_day5 %>% 
+  group_by(group_id) %>% 
+  summarise(gini_index = gini(wordcount)*length(wordcount)/(length(wordcount)-1))
+gini_day6 <- all_wordcounts_day6 %>% 
+  group_by(group_id) %>% 
+  summarise(gini_index = gini(wordcount)*length(wordcount)/(length(wordcount)-1))
+gini_day7 <- all_wordcounts_day7 %>% 
+  group_by(group_id) %>% 
+  summarise(gini_index = gini(wordcount)*length(wordcount)/(length(wordcount)-1))
+gini_day8 <- all_wordcounts_day8 %>% 
+  group_by(group_id) %>% 
+  summarise(gini_index = gini(wordcount)*length(wordcount)/(length(wordcount)-1))
+gini_day9 <- all_wordcounts_day9 %>% 
+  group_by(group_id) %>% 
+  summarise(gini_index = gini(wordcount)*length(wordcount)/(length(wordcount)-1))
+gini_day10 <- all_wordcounts_day10 %>% 
+  group_by(group_id) %>% 
+  summarise(gini_index = gini(wordcount)*length(wordcount)/(length(wordcount)-1))
+gini_day11 <- all_wordcounts_day11 %>% 
+  group_by(group_id) %>% 
+  summarise(gini_index = gini(wordcount)*length(wordcount)/(length(wordcount)-1))
+gini_day12 <- all_wordcounts_day12 %>% 
+  group_by(group_id) %>% 
+  summarise(gini_index = gini(wordcount)*length(wordcount)/(length(wordcount)-1))
+gini_day13 <- all_wordcounts_day13 %>% 
+  group_by(group_id) %>% 
+  summarise(gini_index = gini(wordcount)*length(wordcount)/(length(wordcount)-1))
+gini_day14 <- all_wordcounts_day14 %>% 
+  group_by(group_id) %>% 
+  summarise(gini_index = gini(wordcount)*length(wordcount)/(length(wordcount)-1))
+
+
+# changing_gini <- gini_day1
+# changing_gini$day2 <- gini_day2$gini_index
+# changing_gini$day3 <- gini_day3$gini_index
+# changing_gini$day4 <- gini_day4$gini_index
+# changing_gini$day5 <- gini_day5$gini_index
+# changing_gini$day6 <- gini_day6$gini_index
+# changing_gini$day7 <- gini_day7$gini_index
+# changing_gini$day8 <- gini_day8$gini_index
+# changing_gini$day9 <- gini_day9$gini_index
+# changing_gini$day10 <- gini_day10$gini_index
+# changing_gini$day11 <- gini_day11$gini_index
+# changing_gini$day12 <- gini_day12$gini_index
+# changing_gini$day13 <- gini_day13$gini_index
+# changing_gini$day14 <- gini_day14$gini_index
+# 
+# names(changing_gini)[names(changing_gini) == 'gini_index'] <- 'day1'
+
+changing_gini <- gini_day1
+changing_gini$period = 1
+
+changing_gini <- addValues(changing_gini, gini_day2, 2)
+changing_gini <- addValues(changing_gini, gini_day3, 3)
+changing_gini <- addValues(changing_gini, gini_day4, 4)
+changing_gini <- addValues(changing_gini, gini_day5, 5)
+changing_gini <- addValues(changing_gini, gini_day6, 6)
+changing_gini <- addValues(changing_gini, gini_day7, 7)
+changing_gini <- addValues(changing_gini, gini_day8, 8)
+changing_gini <- addValues(changing_gini, gini_day9, 9)
+changing_gini <- addValues(changing_gini, gini_day10, 10)
+changing_gini <- addValues(changing_gini, gini_day11, 11)
+changing_gini <- addValues(changing_gini, gini_day12, 12)
+changing_gini <- addValues(changing_gini, gini_day13, 13)
+changing_gini <- addValues(changing_gini, gini_day14, 14)
+
+changing_gini <- addConditions(changing_gini)
+
+#write.csv2(changing_gini, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_changing_gini.csv")
+
+```
+
+```{r}
+
+activity_counts_day1 <- calculateActivityCount(seq_day1) %>% 
+  addConditions()
+activity_counts_day2 <- calculateActivityCount(seq_day2) %>% 
+  addConditions()
+activity_counts_day3 <- calculateActivityCount(seq_day3) %>% 
+  addConditions()
+activity_counts_day4 <- calculateActivityCount(seq_day4) %>% 
+  addConditions()
+activity_counts_day5 <- calculateActivityCount(seq_day5) %>% 
+  addConditions()
+activity_counts_day6 <- calculateActivityCount(seq_day6) %>% 
+  addConditions()
+activity_counts_day7 <- calculateActivityCount(seq_day7) %>% 
+  addConditions()
+activity_counts_day8 <- calculateActivityCount(seq_day8) %>% 
+  addConditions()
+activity_counts_day9 <- calculateActivityCount(seq_day9) %>% 
+  addConditions()
+activity_counts_day10 <- calculateActivityCount(seq_day10) %>% 
+  addConditions()
+activity_counts_day11 <- calculateActivityCount(seq_day11) %>% 
+  addConditions()
+activity_counts_day12 <- calculateActivityCount(seq_day12) %>% 
+  addConditions()
+activity_counts_day13 <- calculateActivityCount(seq_day13) %>% 
+  addConditions()
+activity_counts_day14 <- calculateActivityCount(seq_day14) %>% 
+  addConditions()
+
+changing_activity_count <- activity_counts_day1
+changing_activity_count$period = 1
+
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day2, 2)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day3, 3)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day4, 4)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day5, 5)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day6, 6)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day7, 7)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day8, 8)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day9, 9)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day10, 10)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day11, 11)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day12, 12)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day13, 13)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day14, 14)
+
+#write.csv2(changing_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_changing_activity_count.csv")
+
+
+```
+
+## ACTIVITY DISTRIBUTION OVER DAYS BY CONDITION
+<!-- <span style="color:blue">little activity in week one</span> -->
+<!-- <span style="color:blue">more activities in groups with condition in the end</span> -->
+```{r}
+activity_distribution_for_condition <- changing_activity_count %>% 
+  group_by(period) %>% 
+  group_by(condition, add = T) %>% 
+  summarise(accum_activity_count = sum(activity_count))
+```
+
+```{r}
+ggplot(activity_distribution_for_condition, aes(x=period, y=accum_activity_count, group=condition)) +
+  geom_line(aes(color=condition))+
+  geom_point(aes(color=condition))+
+  scale_x_continuous(labels = days, breaks = c(1:14))
+
+```
+
+# WORKDISTRIBUTION FOR FINAL RESULTS
+
+## WORK IMBALANCE BY CONDITION
+<!-- <span style="color:blue">similar in all groups, condition M has fairest work distribution</span> -->
+```{r}
+
+work_imbalance_for_condition <- task3_work_imbalance %>%
+  group_by(condition) %>% 
+  summarise(average_gini_index = mean(gini_index), sd = sd(gini_index))
+
+work_imbalance_for_condition
+```
+```{r}
+ggplot(data=work_imbalance_for_condition, aes(x=condition, y=average_gini_index)) +
+  geom_bar(stat="identity",fill="steelblue") + 
+  geom_errorbar(aes(ymin=average_gini_index-sd, ymax=average_gini_index+sd), width=.2,
+                 position=position_dodge(.9))
+```
+
+
+```{r}
+# ## FORUM WORDCOUNTS BY CONDITION
+# 
+# forum_wordcount_by_condition <- forum_wordcounts %>%
+#   group_by(condition) %>% 
+#   summarise(average_forum_wordcount = mean(forum_wordcount), sd = sd(forum_wordcount))
+# 
+# ggplot(data=forum_wordcount_by_condition, aes(x=condition, y=average_forum_wordcount)) +
+#   geom_bar(stat="identity",fill="steelblue") + 
+#   geom_errorbar(aes(ymin=average_forum_wordcount-sd, ymax=average_forum_wordcount+sd), width=.2,
+#                  position=position_dodge(.9))
+  
+```
+
+```{r}
+# ## WIKI WORDCOUNTS BY CONDITION
+# 
+# wiki_wordcount_by_condition <- wiki_wordcounts %>%
+#   group_by(condition) %>% 
+#   summarise(average_wiki_wordcount = mean(wiki_wordcount), sd = sd(wiki_wordcount))
+# 
+# ggplot(data=wiki_wordcount_by_condition, aes(x=condition, y=average_wiki_wordcount)) +
+#   geom_bar(stat="identity",fill="steelblue") + 
+#   geom_errorbar(aes(ymin=average_wiki_wordcount-sd, ymax=average_wiki_wordcount+sd), width=.2,
+#                  position=position_dodge(.9))
+  
+```
+
+
+```{r}
+# ## OVERALL WORDCOUNTS BY CONDITION
+# wordcount_by_condition <- task2_wordcounts %>%
+#   group_by(condition) %>% 
+#   summarise(average_wordcount = mean(overall_wordcount), sd = sd(overall_wordcount))
+# 
+# ggplot(data=wordcount_by_condition, aes(x=condition, y=average_wordcount)) +
+#   geom_bar(stat="identity",fill="steelblue") + 
+#   geom_errorbar(aes(ymin=average_wordcount-sd, ymax=average_wordcount+sd), width=.2,
+#                  position=position_dodge(.9))
+  
+```
+
+
+## WORKDISTRIBUTION OVER DAYS BY CONDITION
+<!-- <span style="color:blue">Ko: in the beginning of week 2: distribution is getting more unfair</span> -->
+<!-- <span style="color:blue">similar in condition MG</span> -->
+<!-- <span style="color:blue">condtition M relatively stable</span> -->
+```{r}
+work_distribution_for_condition <- changing_gini %>% 
+  filter(!is.na(gini_index)) %>% 
+  group_by(period) %>% 
+  group_by(condition, add = T) %>% 
+  summarise(average_gini = mean(gini_index), sd = sd(gini_index))
+```
+
+```{r}
+ggplot(work_distribution_for_condition, aes(x=period, y=average_gini, group=condition)) +
+  geom_line(aes(color=condition))+
+  geom_point(aes(color=condition))+
+  scale_x_continuous(labels = days, breaks = c(1:14))
+
+```
+
+```{r}
+# 1) accum activity count only for wiki activities
+# 2) closer look at wiki activities in the last 3-4 days
+
+# 1) wiki activities
+```
+
+```{r}
+# filter sub-sequences to only contain relevant activities (timewise) in wiki
+
+wiki_seq_day1 <- sequences %>% 
+  filter(type == "wiki") %>% 
+  filter(period <= 1) 
+wiki_seq_day2 <- sequences %>% 
+  filter(type == "wiki") %>% 
+  filter(period <= 2)
+wiki_seq_day3 <- sequences %>% 
+  filter(type == "wiki") %>%
+  filter(period <= 3)
+wiki_seq_day4 <- sequences %>% 
+  filter(type == "wiki") %>%
+  filter(period <= 4)
+wiki_seq_day5 <- sequences %>% 
+  filter(type == "wiki") %>%
+  filter(period <= 5)
+wiki_seq_day6 <- sequences %>%
+  filter(type == "wiki") %>%
+  filter(period <= 6)
+wiki_seq_day7 <- sequences %>%
+  filter(type == "wiki") %>%
+  filter(period <= 7)
+wiki_seq_day8 <- sequences %>%
+  filter(type == "wiki") %>%
+  filter(period <= 8)
+wiki_seq_day9 <- sequences %>%
+  filter(type == "wiki") %>%
+  filter(period <= 9)
+wiki_seq_day10 <- sequences %>%
+  filter(type == "wiki") %>%
+  filter(period <= 10)
+wiki_seq_day11 <- sequences %>%
+  filter(type == "wiki") %>%
+  filter(period <= 11)
+wiki_seq_day12 <- sequences %>%
+  filter(type == "wiki") %>%
+  filter(period <= 12)
+wiki_seq_day13 <- sequences %>%
+  filter(type == "wiki") %>%
+  filter(period <= 13)
+wiki_seq_day14 <- sequences %>%
+  filter(type == "wiki") %>%
+  filter(period <= 14)
+```
+
+
+```{r}
+
+
+wiki_activity_counts_day1 <- calculateActivityCount(wiki_seq_day1) %>% 
+  addConditions()
+wiki_activity_counts_day2 <- calculateActivityCount(wiki_seq_day2) %>% 
+  addConditions()
+wiki_activity_counts_day3 <- calculateActivityCount(wiki_seq_day3) %>% 
+  addConditions()
+wiki_activity_counts_day4 <- calculateActivityCount(wiki_seq_day4) %>% 
+  addConditions()
+wiki_activity_counts_day5 <- calculateActivityCount(wiki_seq_day5) %>% 
+  addConditions()
+wiki_activity_counts_day6 <- calculateActivityCount(wiki_seq_day6) %>% 
+  addConditions()
+wiki_activity_counts_day7 <- calculateActivityCount(wiki_seq_day7) %>% 
+  addConditions()
+wiki_activity_counts_day8 <- calculateActivityCount(wiki_seq_day8) %>% 
+  addConditions()
+wiki_activity_counts_day9 <- calculateActivityCount(wiki_seq_day9) %>% 
+  addConditions()
+wiki_activity_counts_day10 <- calculateActivityCount(wiki_seq_day10) %>% 
+  addConditions()
+wiki_activity_counts_day11 <- calculateActivityCount(wiki_seq_day11) %>% 
+  addConditions()
+wiki_activity_counts_day12 <- calculateActivityCount(wiki_seq_day12) %>% 
+  addConditions()
+wiki_activity_counts_day13 <- calculateActivityCount(wiki_seq_day13) %>% 
+  addConditions()
+wiki_activity_counts_day14 <- calculateActivityCount(wiki_seq_day14) %>% 
+  addConditions()
+
+changing_wiki_activity_count <- NULL
+
+if (nrow(wiki_activity_counts_day1) > 0) {
+  changing_wiki_activity_count <- wiki_activity_counts_day1
+  changing_wiki_activity_count$period = 1
+} else if (nrow(wiki_activity_counts_day2) > 0) {
+  changing_wiki_activity_count <- wiki_activity_counts_day2
+  changing_wiki_activity_count$period = 2
+} else if (nrow(wiki_activity_counts_day3) > 0) {
+  changing_wiki_activity_count <- wiki_activity_counts_day3
+  changing_wiki_activity_count$period = 3
+}
+
+
+if (nrow(wiki_activity_counts_day1) > 0) {
+  changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day2, 2)
+}
+
+if (nrow(wiki_activity_counts_day1) == 0 && nrow(wiki_activity_counts_day2) > 0) {
+  changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day3, 3)
+  changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day4, 4)
+}
+
+if ((nrow(wiki_activity_counts_day1) == 0) && (nrow(wiki_activity_counts_day2) == 0) && (nrow(wiki_activity_counts_day3) > 0)) {
+  changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day4, 4)
+}
+
+
+changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day5, 5)
+changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day6, 6)
+changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day7, 7)
+changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day8, 8)
+changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day9, 9)
+changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day10, 10)
+changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day11, 11)
+changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day12, 12)
+changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day13, 13)
+changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day14, 14)
+
+#write.csv2(changing_wiki_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_changing_wiki_activity_count.csv")
+
+```
+
+## WIKI ACTIVITY DISTRIBUTION OVER DAYS BY CONDITION
+<span style="color:blue">little activity in week one</span>
+<span style="color:blue">more activities in groups with condition in the end</span>
+```{r}
+wiki_activity_distribution_for_condition <- changing_wiki_activity_count %>% 
+  group_by(period) %>% 
+  group_by(condition, add = T) %>% 
+  summarise(accum_wiki_activity_count = sum(activity_count))
+```
+
+```{r}
+ggplot(wiki_activity_distribution_for_condition, aes(x=period, y=accum_wiki_activity_count, group=condition)) +
+  geom_line(aes(color=condition))+
+  geom_point(aes(color=condition))+
+  scale_x_continuous(labels = days, breaks = c(1:14))
+
+```
+
+## CLOSTER LOOK AT END OF GROUPTASK
+```{r}
+```
+
