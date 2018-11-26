@@ -3,7 +3,10 @@ title: "CVK MOOC Analysis Task2"
 output: html_notebook
 ---
 
-
+```{r}
+source("setup.R")
+source("util.R")
+```
 
 ```{r}
 ### RENDER NOTEBOOK
