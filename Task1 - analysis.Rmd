@@ -4,67 +4,14 @@ output: html_notebook
 ---
 
 ```{r}
-library(purrr)
-library(tidyr)
-library(jsonlite)
-library(dplyr)
-library(ngram)
-library(anytime)
-library(ggplot2)
-library(compare)
-library(reldist)
-library(rmarkdown)
-```
-
-
-```{r}
-### RENDER NOTEBOOK
-#render("analysis.Rmd", output_file = "analysis_task1.html")
+source("setup.R")
+source("util.R")
 ```
 
 ###TODO for new task:
 ####read new files
 ####adjust condition information
-
-### UTIL
-```{r}
-# add conditions to functions
-addConditions <- function(df) {
-  if (nrow(df) > 0) {
-    df$condition <- NA
-    df$condition[df$group_id %in% c(154:159)] <- "Ko"
-    df$condition[df$group_id %in% c(160:165)] <- "M"
-    df$condition[df$group_id %in% c(166:171)] <- "MG"
-    df$condition[df$group_id %in% c(172:174)] <- "KR"
-    df$condition[df$group_id %in% c(187:192)] <- "Ko"
-    df$condition[df$group_id %in% c(193:197)] <- "M"
-    df$condition[df$group_id %in% c(198:202)] <- "MG"
-  }
-  
-  df
-}
-
-# calculate wordcount for each user for sub-sequence
-calculateWordcount <- function(df) {
-  df <- df %>% 
-    group_by(group_id, user_id) %>% 
-    summarise(wordcount = sum(wordcount))
-  df
-}
-
-# calculate activity count for each group for sub-sequence
-calculateActivityCount <- function(df) {
-  df <- df %>% 
-    group_by(group_id) %>% 
-    summarise(activity_count = n())
-  df
-}
-
-addValues <- function (df1, df2, id) {
-  df2$period <- id
-  rbind(df1, df2)
-}
-```
+####adjust start date (task_begin <- as.Date(...))
 
 
 ### READ DATA, GENERATE DATASET
@@ -223,6 +170,8 @@ sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_1
   addConditions()
 
 
+#write.csv2(sequences, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_activities.csv",  fileEncoding = )
+
 ### adding dates as days
 ### adding period (first day = 1; last day = 14)
 ### adding type (forum, wiki)
@@ -234,6 +183,8 @@ sequences <- sequences %>%
   mutate(period = as.numeric(anydate(timestamp) - task_begin)+1) %>% 
   mutate(type = ifelse(object_type == "http://id.tincanapi.com/activitytype/forum-topic", "forum", "wiki"))
   
+
+#write.csv2(sequences, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_activities_2.csv")
 
 ### FORUM DATA ###
 forum_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/replied")
