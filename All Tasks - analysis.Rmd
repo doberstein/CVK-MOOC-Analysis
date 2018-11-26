@@ -4,16 +4,7 @@ output: html_notebook
 ---
 
 ```{r}
-library(purrr)
-library(tidyr)
-library(jsonlite)
-library(dplyr)
-library(ngram)
-library(anytime)
-library(ggplot2)
-library(compare)
-library(reldist)
-library(rmarkdown)
+source("setup.R")
 ```
 
 
@@ -54,6 +45,17 @@ task2_changing_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARi
 task2_changing_wiki_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_changing_wiki_activity_count.csv", stringsAsFactors = F) %>% 
   subset(select = -X)
 
+## TASK 3
+task3_changing_gini <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_changing_gini.csv", stringsAsFactors = F) %>% 
+  subset(select = -X)
+
+task3_changing_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_changing_activity_count.csv", stringsAsFactors = F) %>%
+  subset(select = -X)
+
+task3_changing_wiki_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_changing_wiki_activity_count.csv", stringsAsFactors = F) %>% 
+  subset(select = -X)
+
+
 ```
 
 
@@ -61,9 +63,9 @@ task2_changing_wiki_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/
 ### MERGE DATA FOR TASKS ###
 ############################
 
-all_changing_activity_count <- rbind(task1_changing_activity_count, task2_changing_activity_count)
+all_changing_activity_count <- rbind(task1_changing_activity_count, task2_changing_activity_count, task3_changing_activity_count)
 
-all_changing_gini <- rbind(task1_changing_gini, task2_changing_gini)
+all_changing_gini <- rbind(task1_changing_gini, task2_changing_gini, task3_changing_gini)
 
 ```
 
