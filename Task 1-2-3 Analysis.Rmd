@@ -1,0 +1,199 @@
+---
+title: "CVK Kurs - RUB Analyse"
+output: html_notebook
+---
+
+## INSTALL LIBRARIES (ONCE)
+```{r}
+# install.packages("dplyr")
+```
+
+
+
+## LOAD NECESSARY LIBRARYS
+```{r}
+library(dplyr)
+```
+
+## LOAD DATASET
+### Dataset contains all relevant activities (forum posts / wiki updates) for grouptasks 1,2,3
+### For each group a "start" activity has been added to the "activity sequence" so that the startpoint for the task is apparent (e.g. to find initial inactivity)
+```{r}
+all_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities_with_start.csv", stringsAsFactors = F) %>% subset(select=-c(X, class))
+
+# columns: 
+# names(all_sequences)
+
+# "group_id"    : group id (int)
+# "content"     : text content of the activity. complete message for forum activities, complete wiki revision for wiki activities
+# "object_id"   :
+# "object_name" :
+# "object_type" :
+# "timestamp"   : unix timestamp stating the time that the activity occured
+# "user_id"     : user id (anonymized)
+# "verb_id"     :
+# "wordcount"   : number of words for forum activities, difference between number of words in current and last revision for wiki articles
+# "condition"   : Ko: Kontrollgruppe; M: Mirroring; MG: Mirroring&Guiding
+# "day"         : day that the activity occured
+# "period"      : relative day that the activity occured counted from the task beginning (1-14 for all tasks)
+# "type"        : wiki / forum
+
+
+# read data containing all users with groups and condition
+all_groups_and_users <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/all_groups_and_users.csv", stringsAsFactors = F)
+```
+
+## GET ACTIVITY DATA FOR ONE GROUP
+```{r}
+one_group <- all_sequences %>% 
+  filter(group_id == 154)
+```
+
+## FILTER START ACTIVITY
+```{r}
+one_group <- all_sequences %>% 
+  filter(group_id == 154) %>% 
+  filter(!user_id == "start")
+```
+
+## ACTIVITY COUNT PER USER PER GROUP
+```{r}
+activity_count_for_active_users <- all_sequences %>% 
+  filter(!user_id == "start") %>% 
+  group_by(group_id, user_id) %>% 
+  summarise(activity_count = n())
+
+activity_count_for_active_users
+```
+## ADDING INACTIVE USERS
+```{r}
+# file with all groups and users, set activity_count to 0
+add_groups_and_users <- all_groups_and_users %>%
+    select(c(group_id, user_id)) %>% 
+    mutate(activity_count = 0)
+
+# all inactive users 
+missing <- anti_join(add_groups_and_users, activity_count_for_active_users, by = c("group_id", "user_id"))
+
+activity_count_for_all_users <- full_join(missing, activity_count_for_active_users)
+```
+
+## WORDCOUNT FOR EACH USER
+```{r}
+wordcount_for_active_users <- all_sequences %>% 
+  filter(!user_id == "start") %>% 
+  group_by(group_id, user_id) %>% 
+  summarise(overall_wordcount = sum(wordcount))
+
+# file with all groups and users, set activity_count to 0
+add_groups_and_users <- all_groups_and_users %>%
+    select(c(group_id, user_id)) %>% 
+    mutate(overall_wordcount = 0)
+
+# all inactive users 
+missing <- anti_join(add_groups_and_users, wordcount_for_active_users, by = c("group_id", "user_id"))
+
+wordcount_for_all_users <- full_join(missing, wordcount_for_active_users)
+
+wordcount_count_for_all_users <- addConditions(wordcount_count_for_active_users)
+```
+
+## FORUM WORDCOUNT FOR EACH USER
+```{r}
+forum_wordcount_for_active_users <- all_sequences %>% 
+  filter(!user_id == "start") %>% 
+  filter(type == "forum") %>% 
+  group_by(group_id, user_id) %>% 
+  summarise(forum_wordcount = sum(wordcount))
+
+# file with all groups and users, set activity_count to 0
+add_groups_and_users <- all_groups_and_users %>%
+    select(c(group_id, user_id)) %>% 
+    mutate(forum_wordcount = 0)
+
+# all inactive users 
+missing <- anti_join(add_groups_and_users, forum_wordcount_for_active_users, by = c("group_id", "user_id"))
+
+forum_wordcount_for_all_users <- full_join(missing, forum_wordcount_for_active_users)
+
+forum_wordcount_for_active_users <- addConditions(wordcount_count_for_active_users)
+```
+
+## WIKI WORDCOUNT FOR EACH USER
+```{r}
+wiki_wordcount_for_active_users <- all_sequences %>% 
+  filter(!user_id == "start") %>% 
+  filter(type == "wiki") %>% 
+  group_by(group_id, user_id) %>% 
+  summarise(wiki_wordcount = sum(wordcount))
+
+# file with all groups and users, set activity_count to 0
+add_groups_and_users <- all_groups_and_users %>%
+    select(c(group_id, user_id)) %>% 
+    mutate(wiki_wordcount = 0)
+
+# all inactive users 
+missing <- anti_join(add_groups_and_users, wiki_wordcount_for_active_users, by = c("group_id", "user_id"))
+
+wiki_wordcount_for_all_users <- full_join(missing, wiki_wordcount_for_active_users)
+
+wiki_wordcount_for_active_users <- addConditions(wordcount_count_for_active_users)
+```
+
+## TIME BETWEEN FORUM POSTS
+```{r}
+forum_latency <- all_sequences %>% 
+  filter(type == "forum" | type == "start") %>% 
+  group_by(group_id) %>% 
+  mutate(forum_latency_sec = timestamp - lag(timestamp))
+```
+
+## TIME BETWEEN WIKI UPDATES
+```{r}
+wiki_latency <- all_sequences %>% 
+  filter(type == "wiki" | type == "start") %>% 
+  group_by(group_id) %>% 
+  mutate(wiki_latency_sec = timestamp - lag(timestamp))
+```
+
+## TIME BETWEEN ANY KIND OF ACTIVITY
+```{r}
+activity_latency <- all_sequences %>% 
+  group_by(group_id) %>% 
+  mutate(activity_latency_sec = timestamp - lag(timestamp))
+
+## maximal period of inactivity over all groups (in days)
+max(activity_latency$activity_latency_sec, na.rm = T) / 60 / 60 / 24
+
+```
+
+
+
+###UTIL
+```{r}
+# function to add conditions to dataset based on group_id
+addConditions <- function(df) {
+  if (nrow(df) > 0) {
+    df$condition <- NA
+    
+    # Task1
+    df$condition[df$group_id %in% c(154:159)] <- "Ko"
+    df$condition[df$group_id %in% c(160:165)] <- "M"
+    df$condition[df$group_id %in% c(166:171)] <- "MG"
+    df$condition[df$group_id %in% c(172:174)] <- "KR"
+    
+    # Task2
+    df$condition[df$group_id %in% c(187:192)] <- "Ko"
+    df$condition[df$group_id %in% c(193:197)] <- "M"
+    df$condition[df$group_id %in% c(198:202)] <- "MG"
+    
+    # Task3
+    df$condition[df$group_id %in% c(211:215)] <- "Ko"
+    df$condition[df$group_id %in% c(216:219)] <- "M"
+    df$condition[df$group_id %in% c(221:224)] <- "MG"
+  }
+  
+  df
+}
+```
+
