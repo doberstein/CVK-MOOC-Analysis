@@ -6,6 +6,8 @@ output: html_notebook
 ```{r}
 library(dplyr)
 library(dmm)
+library(TraMineR)
+library(fpc)
 ```
 
 #READ DATA
@@ -25,10 +27,10 @@ library(dmm)
 # write.csv2(all_sequences, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities.csv")
 
 
-## old sequences without start element
-# all_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities.csv", stringsAsFactors = F) %>% 
-#   subset(select=-X) %>% 
-#   filter(condition %in% c("Ko","M","MG"))
+# old sequences without start element
+all_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities.csv", stringsAsFactors = F) %>%
+  subset(select=-X) %>%
+  filter(condition %in% c("Ko","M","MG"))
 ```
 
 ## CLASSIFICATION
@@ -119,10 +121,10 @@ all_sequences$class[all_sequences$type == "forum"] <- "communication"
 # all_sequences_with_start <- data.frame()
 # 
 # addStartElement <- function(df) {
-#   
+# 
 #   first_row <- df[1,]
 #   sequence <- rbind(first_row, df)
-#   
+# 
 #   sequence[1,]$content <- "start"
 #   sequence[1,]$object_id <- "start"
 #   sequence[1,]$object_name <- "start"
@@ -130,10 +132,10 @@ all_sequences$class[all_sequences$type == "forum"] <- "communication"
 #   sequence[1,]$user_id <- "start"
 #   sequence[1,]$verb_id <- "start"
 #   sequence[1,]$wordcount <- 0
-#   sequence[1,]$condition <- "start"
+#   sequence[1,]$condition <- df[1,]$condition
 #   sequence[1,]$type <- "start"
 #   sequence[1,]$class <- "start"
-#   
+# 
 #   # task 1:
 #   if(df[1,]$group_id %in% c(154:174)) {
 #     sequence[1,]$timestamp <- as.numeric(as.character(task1_start_activity$timestamp))
@@ -141,7 +143,7 @@ all_sequences$class[all_sequences$type == "forum"] <- "communication"
 #     sequence[1,]$period <- task1_start_activity$period
 #     #browser()
 #   }
-#   
+# 
 #   # task 2:
 #   if(df[1,]$group_id %in% c(187:202)) {
 #     sequence[1,]$timestamp <- as.numeric(as.character(task2_start_activity$timestamp))
@@ -149,7 +151,7 @@ all_sequences$class[all_sequences$type == "forum"] <- "communication"
 #     sequence[1,]$period <- task2_start_activity$period
 #     #browser()
 #   }
-#   
+# 
 #   # task 3:
 #   if(df[1,]$group_id %in% c(211:224)) {
 #     #browser()
@@ -157,13 +159,13 @@ all_sequences$class[all_sequences$type == "forum"] <- "communication"
 #     sequence[1,]$day <- as.character(task3_start_activity$day)
 #     sequence[1,]$period <- task3_start_activity$period
 #   }
-#   
+# 
 #   all_sequences_with_start <<- rbind(all_sequences_with_start, sequence)
-#   
+# 
 # }
 # 
-# all_sequences %>% 
-#   group_by(group_id) %>% 
+# all_sequences %>%
+#   group_by(group_id) %>%
 #   do(addStartElement(.))
 # 
 # write.csv2(all_sequences_with_start, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities_with_start.csv")
@@ -221,6 +223,39 @@ all_sequences_with_start %>%
 
 
 ```
+
+```{r}
+
+relevant_actions <- c("start", "communication", "major contribution", "minor contribution")
+# create state sequence object from all sequences
+sequences <- seqdef(named_sequences)
+
+#calculate distances for
+#submat <- seqsubm(sequences, method="TRATE")
+submat <- seqsubm(sequences, method="CONSTANT", cval = 1)
+submat["gap->",paste(relevant_actions, "->", sep="")] <- 2
+submat[paste(relevant_actions, "->", sep=""), "gap->"] <- 2
+distances <<- seqdist(sequences, method = "OM", sm=submat)
+distances_manual <<- distances
+
+numClusters <- 3
+clustersPamk <- pamk(distances, krange = numClusters, diss = TRUE, usepam = T)$pamobject$clustering
+membership_manual <<- clustersPamk
+
+# for pamk
+clusterNames <- factor(clustersPamk, labels=paste("Type", 1:numClusters))
+
+# print cluster statistics for pam clustering
+print(cluster.stats(distances, clustersPamk, silhouette = T, G2 = T, G3 = T, wgap = T))
+
+
+#diagram <- seqiplot(sequences, group = clusterNames, cex.plot = 1, cex.legend = 2, axes = F, cols = 1)
+diagram <- seqiplot(sequences, group = clusterNames, idxs = 40)
+
+
+list(clustering=clustersPamk, plot=diagram)
+```
+
 
 ```{r}
 
