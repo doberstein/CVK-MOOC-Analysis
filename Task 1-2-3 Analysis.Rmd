@@ -15,161 +15,19 @@ output: html_notebook
 library(dplyr)
 ```
 
-## LOAD DATASET
-### Dataset contains all relevant activities (forum posts / wiki updates) for grouptasks 1,2,3
-### For each group a "start" activity has been added to the "activity sequence" so that the startpoint for the task is apparent (e.g. to find initial inactivity)
+## SOME USEFUL FUNCTIONS
 ```{r}
-all_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities_with_start.csv", stringsAsFactors = F) %>% subset(select=-c(X, class))
+# writing data frame to csv file
+# write.csv2(<data table name>, "<path/filename.csv>")
+# write.csv2(all_sequences, "/home/doberstein/Desktop/all_sequences.csv", row.names = F)
 
-# columns: 
-# names(all_sequences)
-
-# "group_id"    : group id (int)
-# "content"     : text content of the activity. complete message for forum activities, complete wiki revision for wiki activities
-# "object_id"   :
-# "object_name" :
-# "object_type" :
-# "timestamp"   : unix timestamp stating the time that the activity occured
-# "user_id"     : user id (anonymized)
-# "verb_id"     :
-# "wordcount"   : number of words for forum activities, difference between number of words in current and last revision for wiki articles
-# "condition"   : Ko: Kontrollgruppe; M: Mirroring; MG: Mirroring&Guiding
-# "day"         : day that the activity occured
-# "period"      : relative day that the activity occured counted from the task beginning (1-14 for all tasks)
-# "type"        : wiki / forum
-
-
-# read data containing all users with groups and condition
-all_groups_and_users <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/all_groups_and_users.csv", stringsAsFactors = F)
-```
-
-## GET ACTIVITY DATA FOR ONE GROUP
-```{r}
-one_group <- all_sequences %>% 
-  filter(group_id == 154)
-```
-
-## FILTER START ACTIVITY
-```{r}
-one_group <- all_sequences %>% 
-  filter(group_id == 154) %>% 
-  filter(!user_id == "start")
-```
-
-## ACTIVITY COUNT PER USER PER GROUP
-```{r}
-activity_count_for_active_users <- all_sequences %>% 
-  filter(!user_id == "start") %>% 
-  group_by(group_id, user_id) %>% 
-  summarise(activity_count = n())
-
-activity_count_for_active_users
-```
-## ADDING INACTIVE USERS
-```{r}
-# file with all groups and users, set activity_count to 0
-add_groups_and_users <- all_groups_and_users %>%
-    select(c(group_id, user_id)) %>% 
-    mutate(activity_count = 0)
-
-# all inactive users 
-missing <- anti_join(add_groups_and_users, activity_count_for_active_users, by = c("group_id", "user_id"))
-
-activity_count_for_all_users <- full_join(missing, activity_count_for_active_users)
-```
-
-## WORDCOUNT FOR EACH USER
-```{r}
-wordcount_for_active_users <- all_sequences %>% 
-  filter(!user_id == "start") %>% 
-  group_by(group_id, user_id) %>% 
-  summarise(overall_wordcount = sum(wordcount))
-
-# file with all groups and users, set activity_count to 0
-add_groups_and_users <- all_groups_and_users %>%
-    select(c(group_id, user_id)) %>% 
-    mutate(overall_wordcount = 0)
-
-# all inactive users 
-missing <- anti_join(add_groups_and_users, wordcount_for_active_users, by = c("group_id", "user_id"))
-
-wordcount_for_all_users <- full_join(missing, wordcount_for_active_users)
-
-wordcount_count_for_all_users <- addConditions(wordcount_count_for_active_users)
-```
-
-## FORUM WORDCOUNT FOR EACH USER
-```{r}
-forum_wordcount_for_active_users <- all_sequences %>% 
-  filter(!user_id == "start") %>% 
-  filter(type == "forum") %>% 
-  group_by(group_id, user_id) %>% 
-  summarise(forum_wordcount = sum(wordcount))
-
-# file with all groups and users, set activity_count to 0
-add_groups_and_users <- all_groups_and_users %>%
-    select(c(group_id, user_id)) %>% 
-    mutate(forum_wordcount = 0)
-
-# all inactive users 
-missing <- anti_join(add_groups_and_users, forum_wordcount_for_active_users, by = c("group_id", "user_id"))
-
-forum_wordcount_for_all_users <- full_join(missing, forum_wordcount_for_active_users)
-
-forum_wordcount_for_active_users <- addConditions(wordcount_count_for_active_users)
-```
-
-## WIKI WORDCOUNT FOR EACH USER
-```{r}
-wiki_wordcount_for_active_users <- all_sequences %>% 
-  filter(!user_id == "start") %>% 
-  filter(type == "wiki") %>% 
-  group_by(group_id, user_id) %>% 
-  summarise(wiki_wordcount = sum(wordcount))
-
-# file with all groups and users, set activity_count to 0
-add_groups_and_users <- all_groups_and_users %>%
-    select(c(group_id, user_id)) %>% 
-    mutate(wiki_wordcount = 0)
-
-# all inactive users 
-missing <- anti_join(add_groups_and_users, wiki_wordcount_for_active_users, by = c("group_id", "user_id"))
-
-wiki_wordcount_for_all_users <- full_join(missing, wiki_wordcount_for_active_users)
-
-wiki_wordcount_for_active_users <- addConditions(wordcount_count_for_active_users)
-```
-
-## TIME BETWEEN FORUM POSTS
-```{r}
-forum_latency <- all_sequences %>% 
-  filter(type == "forum" | type == "start") %>% 
-  group_by(group_id) %>% 
-  mutate(forum_latency_sec = timestamp - lag(timestamp))
-```
-
-## TIME BETWEEN WIKI UPDATES
-```{r}
-wiki_latency <- all_sequences %>% 
-  filter(type == "wiki" | type == "start") %>% 
-  group_by(group_id) %>% 
-  mutate(wiki_latency_sec = timestamp - lag(timestamp))
-```
-
-## TIME BETWEEN ANY KIND OF ACTIVITY
-```{r}
-activity_latency <- all_sequences %>% 
-  group_by(group_id) %>% 
-  mutate(activity_latency_sec = timestamp - lag(timestamp))
-
-## maximal period of inactivity over all groups (in days)
-max(activity_latency$activity_latency_sec, na.rm = T) / 60 / 60 / 24
+# reading data from csv file into R data frame
+# <data frame name> <- read.csv2("<path/filename.csv", stringsAsFactors = F)
+# all_groups_and_users <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities_with_start.csv", stringsAsFactors = F)
 
 ```
 
-
-
-###UTIL
+##UTIL
 ```{r}
 # function to add conditions to dataset based on group_id
 addConditions <- function(df) {
@@ -196,4 +54,417 @@ addConditions <- function(df) {
   df
 }
 ```
+
+
+## LOAD DATASET
+### Dataset contains all relevant activities (forum posts / wiki updates) for grouptasks 1,2,3 for the conditions:
+### Ko: Kontrollgruppe
+### M: Mirroring 
+### MG: Mirroring&Guiding
+
+### Task1: Integrationsmodelle 
+### GruppenIDs: 154 - 174
+
+### Task2: Soziale Präsenz
+### GruppenIDs: 187 - 202
+
+### Task3: Brainstorming
+### GruppenIDs: 211 - 224
+
+### (Groups for "Keine Rückmeldung" were omitted from the dataset)
+### For each group a "start" activity has been added to the "activity sequence" so that the startpoint for the task is apparent (e.g. to find initial inactivity)
+```{r}
+all_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities_with_start.csv", stringsAsFactors = F) %>% subset(select=-c(X, class))
+
+
+# columns: 
+# names(all_sequences)
+
+# "group_id"    : group id (int)
+# "content"     : text content of the activity. complete message for forum activities, complete wiki revision for wiki activities
+# "object_id"   :
+# "object_name" :
+# "object_type" :
+# "timestamp"   : unix timestamp stating the time that the activity occured
+# "user_id"     : user id (anonymized)
+# "verb_id"     :
+# "wordcount"   : number of words for forum activities, difference between number of words in current and last revision for wiki articles
+# "condition"   : Ko: Kontrollgruppe; M: Mirroring; MG: Mirroring&Guiding
+# "day"         : day that the activity occured
+# "period"      : relative day that the activity occured counted from the task beginning (1-14 for all tasks)
+# "type"        : wiki / forum
+
+
+
+# read data containing all users with groups and condition (Groups for "Keine Rückmeldung" are omitted)
+all_groups_and_users <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/all_groups_and_users.csv", stringsAsFactors = F) %>% 
+  filter(!condition == "KR")
+```
+
+### GET ACTIVITY DATA FOR ONE GROUP
+```{r}
+group_154 <- all_sequences %>% 
+  filter(group_id == 154)
+
+group_154
+
+# write as csv
+#write.csv2(group_154, "/home/doberstein/Desktop/group_154.csv", row.names = F)
+```
+
+### FILTER OUT START ACTIVITY
+```{r}
+one_group <- all_sequences %>% 
+  filter(group_id == 154) %>% 
+  filter(!user_id == "start")
+```
+
+### ACTIVITY COUNT PER USER PER GROUP
+```{r}
+activity_count_for_active_users <- all_sequences %>% 
+  filter(!user_id == "start") %>% 
+  group_by(group_id, user_id) %>% 
+  summarise(activity_count = n())
+
+activity_count_for_active_users
+```
+### ADDING INACTIVE USERS
+```{r}
+# file with all groups and users, set activity_count to 0
+add_groups_and_users <- all_groups_and_users %>%
+    select(c(group_id, user_id)) %>% 
+    mutate(activity_count = 0)
+
+# all inactive users 
+missing <- anti_join(add_groups_and_users, activity_count_for_active_users, by = c("group_id", "user_id"))
+
+activity_count_for_all_users <- full_join(missing, activity_count_for_active_users)
+
+activity_count_for_all_users
+```
+
+# IKARion Logfiles zu Wordcount in Forum und Wiki
+
+### WORDCOUNT FOR EACH USER
+```{r}
+wordcount_for_active_users <- all_sequences %>% 
+  filter(!user_id == "start") %>% 
+  group_by(group_id, user_id) %>% 
+  summarise(overall_wordcount = sum(wordcount))
+
+# file with all groups and users, set activity_count to 0
+add_groups_and_users <- all_groups_and_users %>%
+    select(c(group_id, user_id)) %>% 
+    mutate(overall_wordcount = 0)
+
+# all inactive users 
+missing <- anti_join(add_groups_and_users, wordcount_for_active_users, by = c("group_id", "user_id"))
+
+wordcount_for_all_users <- full_join(missing, wordcount_for_active_users)
+
+wordcount_for_all_users <- addConditions(wordcount_for_all_users)
+
+wordcount_for_all_users
+```
+
+## FORUM WORDCOUNT FOR EACH USER
+```{r}
+forum_wordcount_for_active_users <- all_sequences %>% 
+  filter(!user_id == "start") %>% 
+  filter(type == "forum") %>% 
+  group_by(group_id, user_id) %>% 
+  summarise(forum_wordcount = sum(wordcount))
+
+# file with all groups and users, set activity_count to 0
+add_groups_and_users <- all_groups_and_users %>%
+    select(c(group_id, user_id)) %>% 
+    mutate(forum_wordcount = 0)
+
+# all inactive users 
+missing <- anti_join(add_groups_and_users, forum_wordcount_for_active_users, by = c("group_id", "user_id"))
+
+forum_wordcount_for_all_users <- full_join(missing, forum_wordcount_for_active_users) %>% 
+  addConditions()
+
+forum_wordcount_for_all_users
+
+```
+
+## WIKI WORDCOUNT FOR EACH USER
+```{r}
+wiki_wordcount_for_active_users <- all_sequences %>% 
+  filter(!user_id == "start") %>% 
+  filter(type == "wiki") %>% 
+  group_by(group_id, user_id) %>% 
+  summarise(wiki_wordcount = sum(wordcount))
+
+# file with all groups and users, set activity_count to 0
+add_groups_and_users <- all_groups_and_users %>%
+    select(c(group_id, user_id)) %>% 
+    mutate(wiki_wordcount = 0)
+
+# all inactive users 
+missing <- anti_join(add_groups_and_users, wiki_wordcount_for_active_users, by = c("group_id", "user_id"))
+
+wiki_wordcount_for_all_users <- full_join(missing, wiki_wordcount_for_active_users) %>% 
+  addConditions()
+```
+
+## WORDCOUNT FOR EACH USER AFTER 7 DAYS
+```{r}
+wordcount_for_active_users_7d <- all_sequences %>% 
+  filter(!user_id == "start") %>% 
+  filter(period <= 7) %>% # filter out activities that occured after day 7
+  group_by(group_id, user_id) %>% 
+  summarise(overall_wordcount_7d = sum(wordcount))
+
+# file with all groups and users, set activity_count to 0
+add_groups_and_users <- all_groups_and_users %>%
+    select(c(group_id, user_id)) %>% 
+    mutate(overall_wordcount_7d = 0)
+
+# all inactive users 
+missing <- anti_join(add_groups_and_users, wordcount_for_active_users_7d, by = c("group_id", "user_id"))
+
+wordcount_for_all_users_7d <- full_join(missing, wordcount_for_active_users_7d) %>% 
+  addConditions()
+
+wordcount_for_all_users_7d
+```
+
+## MERGING DATAFRAMES
+```{r}
+wordcount_for_all_users
+forum_wordcount_for_all_users
+wiki_wordcount_for_all_users
+wordcount_for_all_users_7d
+
+complete_wordcount_data <- merge(wordcount_for_all_users, forum_wordcount_for_all_users) %>% 
+  merge(wiki_wordcount_for_all_users) %>% 
+  merge(wordcount_for_all_users_7d)
+  
+
+
+```
+
+#IKARion Zeitabstand zwischen Forenbeiträgen
+
+## TIME BETWEEN FORUM POSTS
+```{r}
+forum_latency <- all_sequences %>% 
+  filter(type == "forum" | type == "start") %>% 
+  group_by(group_id) %>% 
+  mutate(forum_latency_sec = timestamp - lag(timestamp))
+```
+
+## AVERAGE TIME BETWEEN FORUM POSTS BY GROUP
+```{r}
+forum_latency_by_group <- forum_latency %>% 
+  filter(!user_id == "start") %>% 
+  group_by(group_id) %>% 
+  summarise(average_latency = mean(forum_latency_sec))
+
+forum_activity_count_by_group <- forum_latency %>% 
+  filter(!user_id == "start") %>% 
+  group_by(group_id) %>% 
+  summarise(forum_activity_count = n())
+
+forum_data <- merge(forum_latency_by_group, forum_activity_count_by_group)
+```
+
+
+## TIME BETWEEN WIKI UPDATES
+```{r}
+wiki_latency <- all_sequences %>% 
+  filter(type == "wiki" | type == "start") %>% 
+  group_by(group_id) %>% 
+  mutate(wiki_latency_sec = timestamp - lag(timestamp))
+```
+
+## TIME BETWEEN ANY KIND OF ACTIVITY
+```{r}
+activity_latency <- all_sequences %>% 
+  group_by(group_id) %>% 
+  mutate(activity_latency_sec = timestamp - lag(timestamp))
+
+## maximal period of inactivity over all groups (in days)
+max(activity_latency$activity_latency_sec, na.rm = T) / 60 / 60 / 24
+
+```
+
+## Aktivitäten für Themenblock 1
+### Task1: Integrationsmodelle 
+### GruppenIDs: 154 - 174
+```{r}
+# all task 1 activities
+task1_activities <- all_sequences %>% 
+  filter(group_id %in% c(154:174)) %>% 
+  filter(!user_id == "start")
+
+# all task 1 forum activities
+task1_forum_activities <- task1_activities %>% 
+  filter(type == "forum")
+
+# all task 1 wiki activities
+task1_wiki_activities <- task1_activities %>% 
+  filter(type == "wiki")
+
+# all task 1 activities for condition "Kontrollgruppe"
+task1_activities_Ko <- task1_activities %>% 
+  filter(condition == "Ko")
+
+# all task 1 activities for one group (154)
+task1_activities_154 <- task1_activities %>% 
+  filter(group_id == 154)
+```
+
+
+# IKARion Logfiles zu Gini-Koeffizient in Forum und Wiki
+```{r}
+# gini calculation for all activities (forum + wiki combined) for complete task (14 days)
+
+# (already done above, see calculation for variable: "wordcount_for_all_users")
+gini_coeff_overall <- wordcount_for_all_users %>% 
+  group_by(group_id) %>% 
+  summarize(gini_overall = gini(overall_wordcount)*length(overall_wordcount)/(length(overall_wordcount)-1))
+
+```
+
+### WORDCOUNTS AND GINI AFTER DAY 3
+```{r}
+# wordcounts after day 3
+wordcount_for_active_users_3d <- all_sequences %>% 
+  filter(!user_id == "start") %>% 
+  filter(period <= 3) %>% 
+  group_by(group_id, user_id) %>% 
+  summarise(wordcount_3d = sum(wordcount))
+
+# file with all groups and users, set activity_count to 0
+add_groups_and_users <- all_groups_and_users %>%
+    select(c(group_id, user_id)) %>% 
+    mutate(wordcount_3d = 0)
+
+# all inactive users 
+missing <- anti_join(add_groups_and_users, wordcount_for_active_users_3d, by = c("group_id", "user_id"))
+
+wordcount_for_all_users_3d <- full_join(missing, wordcount_for_active_users_3d)
+
+wordcount_for_all_users_3d <- addConditions(wordcount_for_all_users_3d)
+
+gini_coeff_3d <- wordcount_for_all_users_3d %>% 
+  group_by(group_id) %>% 
+  summarize(gini_3d = gini(wordcount_3d)*length(wordcount_3d)/(length(wordcount_3d)-1))
+```
+### WORDCOUNTS AND GINI AFTER DAY 7
+```{r}
+# wordcounts after day 7
+wordcount_for_active_users_7d <- all_sequences %>% 
+  filter(!user_id == "start") %>% 
+  filter(period <= 7) %>% 
+  group_by(group_id, user_id) %>% 
+  summarise(wordcount_7d = sum(wordcount))
+
+# file with all groups and users, set activity_count to 0
+add_groups_and_users <- all_groups_and_users %>%
+    select(c(group_id, user_id)) %>% 
+    mutate(wordcount_7d = 0)
+
+# all inactive users 
+missing <- anti_join(add_groups_and_users, wordcount_for_active_users_7d, by = c("group_id", "user_id"))
+
+wordcount_for_all_users_7d <- full_join(missing, wordcount_for_active_users_7d)
+
+wordcount_for_all_users_7d <- addConditions(wordcount_for_all_users_7d)
+
+gini_coeff_7d <- wordcount_for_all_users_7d %>% 
+  group_by(group_id) %>% 
+  summarize(gini_7d = gini(wordcount_7d)*length(wordcount_7d)/(length(wordcount_7d)-1))
+```
+
+### WORDCOUNTS AND GINI AFTER DAY 10
+```{r}
+# wordcounts after day 10
+wordcount_for_active_users_10d <- all_sequences %>% 
+  filter(!user_id == "start") %>% 
+  filter(period <= 10) %>% 
+  group_by(group_id, user_id) %>% 
+  summarise(wordcount_10d = sum(wordcount))
+
+# file with all groups and users, set activity_count to 0
+add_groups_and_users <- all_groups_and_users %>%
+    select(c(group_id, user_id)) %>% 
+    mutate(wordcount_10d = 0)
+
+# all inactive users 
+missing <- anti_join(add_groups_and_users, wordcount_for_active_users_10d, by = c("group_id", "user_id"))
+
+wordcount_for_all_users_10d <- full_join(missing, wordcount_for_active_users_10d)
+
+wordcount_for_all_users_10d <- addConditions(wordcount_for_all_users_10d)
+
+gini_coeff_10d <- wordcount_for_all_users_10d %>% 
+  group_by(group_id) %>% 
+  summarize(gini_10d = gini(wordcount_10d)*length(wordcount_10d)/(length(wordcount_10d)-1))
+```
+
+### WORDCOUNTS AND GINI AFTER DAY 12
+```{r}
+# wordcounts after day 12
+wordcount_for_active_users_12d <- all_sequences %>% 
+  filter(!user_id == "start") %>% 
+  filter(period <= 12) %>% 
+  group_by(group_id, user_id) %>% 
+  summarise(wordcount_12d = sum(wordcount))
+
+# file with all groups and users, set activity_count to 0
+add_groups_and_users <- all_groups_and_users %>%
+    select(c(group_id, user_id)) %>% 
+    mutate(wordcount_12d = 0)
+
+# all inactive users 
+missing <- anti_join(add_groups_and_users, wordcount_for_active_users_12d, by = c("group_id", "user_id"))
+
+wordcount_for_all_users_12d <- full_join(missing, wordcount_for_active_users_12d)
+
+wordcount_for_all_users_12d <- addConditions(wordcount_for_all_users_12d)
+
+gini_coeff_12d <- wordcount_for_all_users_12d %>% 
+  group_by(group_id) %>% 
+  summarize(gini_12d = gini(wordcount_12d)*length(wordcount_12d)/(length(wordcount_12d)-1))
+```
+### WORDCOUNTS AND GINI AFTER DAY 14
+```{r}
+# wordcounts after day 14
+wordcount_for_active_users_14d <- all_sequences %>% 
+  filter(!user_id == "start") %>% 
+  filter(period <= 14) %>% 
+  group_by(group_id, user_id) %>% 
+  summarise(wordcount_14d = sum(wordcount))
+
+# file with all groups and users, set activity_count to 0
+add_groups_and_users <- all_groups_and_users %>%
+    select(c(group_id, user_id)) %>% 
+    mutate(wordcount_14d = 0)
+
+# all inactive users 
+missing <- anti_join(add_groups_and_users, wordcount_for_active_users_14d, by = c("group_id", "user_id"))
+
+wordcount_for_all_users_14d <- full_join(missing, wordcount_for_active_users_14d)
+
+wordcount_for_all_users_14d <- addConditions(wordcount_for_all_users_14d)
+
+gini_coeff_14d <- wordcount_for_all_users_14d %>% 
+  group_by(group_id) %>% 
+  summarize(gini_14d = gini(wordcount_14d)*length(wordcount_14d)/(length(wordcount_14d)-1))
+```
+
+### GINI INDEX OVER TIME
+```{r}
+gini_over_time <- merge(gini_coeff_3d, gini_coeff_7d) %>% 
+  merge(gini_coeff_10d) %>% 
+  merge(gini_coeff_12d) %>% 
+  merge(gini_coeff_14d)
+```
+
+
 
