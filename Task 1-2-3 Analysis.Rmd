@@ -13,6 +13,7 @@ output: html_notebook
 ## LOAD NECESSARY LIBRARYS
 ```{r}
 library(dplyr)
+library(reldist)
 ```
 
 ## SOME USEFUL FUNCTIONS
@@ -463,7 +464,8 @@ gini_coeff_14d <- wordcount_for_all_users_14d %>%
 gini_over_time <- merge(gini_coeff_3d, gini_coeff_7d) %>% 
   merge(gini_coeff_10d) %>% 
   merge(gini_coeff_12d) %>% 
-  merge(gini_coeff_14d)
+  merge(gini_coeff_14d) %>% 
+  addConditions()
 ```
 
 
