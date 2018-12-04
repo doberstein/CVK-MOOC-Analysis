@@ -16,145 +16,144 @@ source("util.R")
 
 ### READ DATA, GENERATE DATASET
 ```{r}
-# ### ONCE ###
-# 
-# # complete final models with content for each condition
-# data_Ko <- fromJSON("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/Task1/Task1_IntModelle_Ko_content.txt")
-# data_M <- fromJSON("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/Task1/Task1_IntModelle_M_content.txt")
-# data_MG <- fromJSON("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/Task1/Task1_IntModelle_MG_content.txt")
-# data_KR <- fromJSON("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/Task1/Task1_IntModelle_K_R_content.txt")
-# 
-# 
-# ### SEQUENCES ###
-# # unnest sequences from lists to data.frame
-# sequences_Ko <- data_Ko$group_sequences %>%
-#   unnest()
-# sequences_M <- data_M$group_sequences %>%
-#   unnest()
-# sequences_MG <- data_MG$group_sequences %>%
-#   unnest()
-# sequences_KR <- data_KR$group_sequences %>%
-#   unnest()
-# 
-# # combine all files to a single table
-# sequences <- bind_rows(list(sequences_Ko, sequences_M, sequences_MG, sequences_KR))
-# 
-# write.csv2(sequences, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_activities.csv")
-# 
-# ### WORK IMBALANCE ###
-# # extract work imbalances
-# work_imbalance_Ko <- data_Ko$work_imbalance
-# work_imbalance_M <- data_M$work_imbalance
-# work_imbalance_MG <- data_MG$work_imbalance
-# work_imbalance_KR <- data_KR$work_imbalance
-# 
-# # combine all files to a single table
-# work_imbalances <- bind_rows(list(work_imbalance_Ko, work_imbalance_M, work_imbalance_MG, work_imbalance_KR))
-# 
-# # adding condition information #
-# work_imbalances <- addConditions(work_imbalances)
-# 
-# write.csv2(work_imbalances, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_work_imbalances.csv")
-# 
-# ### FINAL WIKI WORD COUNTS ###
-# wordcount_wiki_Ko <- data_Ko$text_contributions_wiki %>% 
-#   unnest()
-# wordcount_wiki_M <- data_M$text_contributions_wiki %>% 
-#   unnest()
-# wordcount_wiki_MG <- data_MG$text_contributions_wiki %>% 
-#   unnest()
-# wordcount_wiki_KR <- data_KR$text_contributions_wiki %>% 
-#   unnest()
-# 
-# # combine all files to a single table
-# wiki_wordcounts <- bind_rows(list(wordcount_wiki_Ko, wordcount_wiki_M, wordcount_wiki_MG, wordcount_wiki_KR)) %>% 
-#   addConditions()
-# 
-# write.csv2(wiki_wordcounts, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_wiki_wordcounts.csv")
-# 
-# ### FINAL Forum WORD COUNTS ###
-# wordcount_forum_Ko <- data_Ko$text_contributions_forum %>% 
-#   unnest()
-# wordcount_forum_M <- data_M$text_contributions_forum %>% 
-#   unnest()
-# wordcount_forum_MG <- data_MG$text_contributions_forum %>% 
-#   unnest()
-# wordcount_forum_KR <- data_KR$text_contributions_forum %>% 
-#   unnest()
-# 
-# # combine all files to a single table
-# forum_wordcounts <- bind_rows(list(wordcount_forum_Ko, wordcount_forum_M, wordcount_forum_MG, wordcount_forum_KR)) %>% 
-#   addConditions()
-# 
-# write.csv2(forum_wordcounts, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_forum_wordcounts.csv")
-# 
-# # extract groups and users
-# users_groups_Ko <- data_Ko$model_metadata$groups %>% 
-#   unnest()
-# users_groups_M <- data_M$model_metadata$groups %>% 
-#   unnest()
-# users_groups_MG <- data_MG$model_metadata$groups %>% 
-#   unnest()
-# users_groups_KR <- data_KR$model_metadata$groups %>% 
-#   unnest()
-# 
-# # combine all files to a single table
-# groups_and_users <- bind_rows(list(users_groups_Ko, users_groups_M, users_groups_MG, users_groups_KR)) %>% 
-#   subset(select = c("group_id", "name"))
-# names(groups_and_users)[names(groups_and_users) == 'name'] <- 'user_id'
-# 
-# groups_and_users <- addConditions(groups_and_users)
-# 
-# 
-# write.csv2(groups_and_users, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_groups_and_users.csv")
+### ONCE ###
+# complete final models with content for each condition
+data_Ko <- fromJSON("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/Task1/Task1_IntModelle_Ko_content_updated.txt")
+data_M <- fromJSON("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/Task1/Task1_IntModelle_M_content_updated.txt")
+data_MG <- fromJSON("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/Task1/Task1_IntModelle_MG_content_updated.txt")
+data_KR <- fromJSON("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/Task1/Task1_IntModelle_K_R_content_updated.txt")
+
+
+### SEQUENCES ###
+# unnest sequences from lists to data.frame
+sequences_Ko <- data_Ko$group_sequences %>%
+  unnest()
+sequences_M <- data_M$group_sequences %>%
+  unnest()
+sequences_MG <- data_MG$group_sequences %>%
+  unnest()
+sequences_KR <- data_KR$group_sequences %>%
+  unnest()
+
+# combine all files to a single table
+sequences <- bind_rows(list(sequences_Ko, sequences_M, sequences_MG, sequences_KR))
+
+write.csv2(sequences, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_activities.csv")
+
+### WORK IMBALANCE ###
+# extract work imbalances
+work_imbalance_Ko <- data_Ko$work_imbalance
+work_imbalance_M <- data_M$work_imbalance
+work_imbalance_MG <- data_MG$work_imbalance
+work_imbalance_KR <- data_KR$work_imbalance
+
+# combine all files to a single table
+work_imbalances <- bind_rows(list(work_imbalance_Ko, work_imbalance_M, work_imbalance_MG, work_imbalance_KR))
+
+# adding condition information #
+work_imbalances <- addConditions(work_imbalances)
+
+write.csv2(work_imbalances, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_work_imbalances.csv")
+
+### FINAL WIKI WORD COUNTS ###
+wordcount_wiki_Ko <- data_Ko$text_contributions_wiki %>%
+  unnest()
+wordcount_wiki_M <- data_M$text_contributions_wiki %>%
+  unnest()
+wordcount_wiki_MG <- data_MG$text_contributions_wiki %>%
+  unnest()
+wordcount_wiki_KR <- data_KR$text_contributions_wiki %>%
+  unnest()
+
+# combine all files to a single table
+wiki_wordcounts <- bind_rows(list(wordcount_wiki_Ko, wordcount_wiki_M, wordcount_wiki_MG, wordcount_wiki_KR)) %>%
+  addConditions()
+
+write.csv2(wiki_wordcounts, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_wiki_wordcounts.csv")
+
+### FINAL Forum WORD COUNTS ###
+wordcount_forum_Ko <- data_Ko$text_contributions_forum %>%
+  unnest()
+wordcount_forum_M <- data_M$text_contributions_forum %>%
+  unnest()
+wordcount_forum_MG <- data_MG$text_contributions_forum %>%
+  unnest()
+wordcount_forum_KR <- data_KR$text_contributions_forum %>%
+  unnest()
+
+# combine all files to a single table
+forum_wordcounts <- bind_rows(list(wordcount_forum_Ko, wordcount_forum_M, wordcount_forum_MG, wordcount_forum_KR)) %>%
+  addConditions()
+
+write.csv2(forum_wordcounts, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_forum_wordcounts.csv")
+
+# extract groups and users
+users_groups_Ko <- data_Ko$model_metadata$groups %>%
+  unnest()
+users_groups_M <- data_M$model_metadata$groups %>%
+  unnest()
+users_groups_MG <- data_MG$model_metadata$groups %>%
+  unnest()
+users_groups_KR <- data_KR$model_metadata$groups %>%
+  unnest()
+
+# combine all files to a single table
+groups_and_users <- bind_rows(list(users_groups_Ko, users_groups_M, users_groups_MG, users_groups_KR)) %>%
+  subset(select = c("group_id", "name"))
+names(groups_and_users)[names(groups_and_users) == 'name'] <- 'user_id'
+
+groups_and_users <- addConditions(groups_and_users)
+
+
+write.csv2(groups_and_users, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_groups_and_users.csv")
 
 ```
 
 ### DATA PREPROCESSING: WIKI WORDCOUNT CALCULATION
 ```{r}
-### ONCE ###
-# sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_activities.csv", stringsAsFactors = F) %>% 
-#   subset(select=-X) %>%
-#   rowwise() %>% 
-#   mutate(content = gsub("\n", " ", content)) %>%  # delete newlines
-#   mutate(wordcount = wordcount(content))  # calculate wordcount
-#   
-# ### FORUM DATA ###
-# forum_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/replied")
-# 
-# ### WIKI DATA ###
-# 
-# wiki_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/updated") %>% 
-#   group_by(group_id) %>% 
-#   arrange(timestamp, .by_group = T) %>%
-#   mutate(textchange = wordcount - lag(wordcount)) # calculate textchange as difference between current and last revision
-# 
-# # correct value for first revisions (since textchange for first posts are "NA")
-# firstRevisions <- is.na(wiki_data$textchange)
-# wiki_data$textchange[firstRevisions] <- wiki_data$wordcount[firstRevisions]
-# 
-# # correct value for revisions that are shorter than the last on (change negative numbers to 0)
-# negativeWordcounts <- wiki_data$textchange < 0
-# length(which(negativeWordcounts[negativeWordcounts==TRUE]))
-# wiki_data$textchange[negativeWordcounts] <- 0
-# 
-# # replace 'wordcount' with 'textchange'
-# wiki_data <- wiki_data %>% 
-#   subset(select = - wordcount)
-# 
-# names(wiki_data)[names(wiki_data) == 'textchange'] <- 'wordcount'
-# 
-# ### Analyze together ###
-# sequences2 <- bind_rows(list(forum_data, wiki_data)) %>% 
-#   group_by(group_id) %>% 
-#   arrange(timestamp, .by_group = T)
-# 
-# write.csv2(sequences2, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_activities.csv")
+## ONCE ###
+sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_activities.csv", stringsAsFactors = F) %>%
+  subset(select=-X) %>%
+  rowwise() %>%
+  mutate(content = gsub("\n", " ", content)) %>%  # delete newlines
+  mutate(wordcount = wordcount(content))  # calculate wordcount
+
+### FORUM DATA ###
+forum_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/replied")
+
+### WIKI DATA ###
+
+wiki_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/updated") %>%
+  group_by(group_id) %>%
+  arrange(timestamp, .by_group = T) %>%
+  mutate(textchange = wordcount - lag(wordcount)) # calculate textchange as difference between current and last revision
+
+# correct value for first revisions (since textchange for first posts are "NA")
+firstRevisions <- is.na(wiki_data$textchange)
+wiki_data$textchange[firstRevisions] <- wiki_data$wordcount[firstRevisions]
+
+# correct value for revisions that are shorter than the last on (change negative numbers to 0)
+negativeWordcounts <- wiki_data$textchange < 0
+length(which(negativeWordcounts[negativeWordcounts==TRUE]))
+wiki_data$textchange[negativeWordcounts] <- 0
+
+# replace 'wordcount' with 'textchange'
+wiki_data <- wiki_data %>%
+  subset(select = - wordcount)
+
+names(wiki_data)[names(wiki_data) == 'textchange'] <- 'wordcount'
+
+### Analyze together ###
+sequences2 <- bind_rows(list(forum_data, wiki_data)) %>%
+  group_by(group_id) %>%
+  arrange(timestamp, .by_group = T)
+
+write.csv2(sequences2, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_activities.csv")
 
 ### find largest deletes: wiki post with highest negative wordcount ###
-# wiki_data2 <- wiki_data2 %>% 
+# wiki_data2 <- wiki_data2 %>%
 #   arrange(textchange)
-# 
+#
 # ind <- which(wiki_data2$textchange == -460)
 # rows <- lapply(ind, function(wiki_data2) (wiki_data2-5):(wiki_data2+5))
 # # With unlist() you get all relevant rows
@@ -170,7 +169,6 @@ sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_1
   addConditions()
 
 
-#write.csv2(sequences, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_activities.csv",  fileEncoding = )
 
 ### adding dates as days
 ### adding period (first day = 1; last day = 14)
@@ -184,7 +182,7 @@ sequences <- sequences %>%
   mutate(type = ifelse(object_type == "http://id.tincanapi.com/activitytype/forum-topic", "forum", "wiki"))
   
 
-#write.csv2(sequences, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_activities_2.csv")
+write.csv2(sequences, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_activities_2.csv")
 
 ### FORUM DATA ###
 forum_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/replied")
@@ -206,6 +204,7 @@ wiki_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/updat
 ### Average wordcount for wiki activities
 ```{r}
 mean(wiki_data$wordcount)
+median(wiki_data$wordcount)
 ```
 
 ### Average wordcount for forum activities
@@ -479,7 +478,8 @@ groups_and_users <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC -
 
 # add user that unenrolled from course: xznJc2qD3s60qjB6Mazeng==
 # users appears in work_balance, wiki and forum wordcount + sequence but not in group in metadata
-groups_and_users[nrow(groups_and_users) + 1,] = list(165, "xznJc2qD3s60qjB6Mazeng==", "M", 0)
+# USER WAS ADDED MANUALLY TO "Task1_IntModelle_M_content_updated.txt"
+# groups_and_users[nrow(groups_and_users) + 1,] = list(165, "xznJc2qD3s60qjB6Mazeng==", "M", 0)
 
 missing_day1 <- anti_join(groups_and_users, wordcounts_day1, by = c("group_id", "user_id", "condition"))
 missing_day2 <- anti_join(groups_and_users, wordcounts_day2, by = c("group_id", "user_id", "condition"))
@@ -574,7 +574,7 @@ changing_gini <- addValues(changing_gini, gini_day14, 14)
 
 changing_gini <- addConditions(changing_gini)
 
-#write.csv2(changing_gini, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_changing_gini.csv")
+write.csv2(changing_gini, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_changing_gini.csv")
 
 
 ```
@@ -627,7 +627,7 @@ changing_activity_count <- addValues(changing_activity_count, activity_counts_da
 changing_activity_count <- addValues(changing_activity_count, activity_counts_day13, 13)
 changing_activity_count <- addValues(changing_activity_count, activity_counts_day14, 14)
 
-#write.csv2(changing_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_changing_activity_count.csv")
+write.csv2(changing_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_changing_activity_count.csv")
 
 
 ```
@@ -859,7 +859,7 @@ changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_act
 changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day13, 13)
 changing_wiki_activity_count <- addValues(changing_wiki_activity_count, wiki_activity_counts_day14, 14)
 
-#write.csv2(changing_wiki_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_changing_wiki_activity_count.csv")
+write.csv2(changing_wiki_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_changing_wiki_activity_count.csv")
 
 ```
 
