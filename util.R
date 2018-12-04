@@ -24,6 +24,24 @@ addConditions <- function(df) {
   df
 }
 
+addTask <- function(df) {
+  if (nrow(df) > 0) {
+    df$task <- NA
+    
+    # Task1
+    df$task[df$group_id %in% c(154:174)] <- "task1"
+    
+    # Task2
+    df$task[df$group_id %in% c(187:202)] <- "task2"
+    
+    # Task3
+    df$task[df$group_id %in% c(211:224)] <- "task3"
+  }
+  
+  df
+}
+
+
 # calculate wordcount for each user for sub-sequence
 calculateWordcount <- function(df) {
   df <- df %>% 
