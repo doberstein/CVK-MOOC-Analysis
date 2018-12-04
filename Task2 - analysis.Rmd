@@ -145,26 +145,26 @@ source("util.R")
 #   arrange(timestamp, .by_group = T)
 # 
 # write.csv2(sequences2, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_activities.csv")
-# 
-# ### find largest deletes: wiki post with highest negative wordcount ###
-# # wiki_data2 <- wiki_data2 %>%
-# #   arrange(textchange)
-# #
-# # ind <- which(wiki_data2$textchange == -460)
-# # rows <- lapply(ind, function(wiki_data2) (wiki_data2-5):(wiki_data2+5))
-# # # With unlist() you get all relevant rows
-# # d1 <- wiki_data2[unlist(rows),]
-# 
-# # ### *** test wordcount calc ###
-# # s1 <- sequences %>% 
-# #   arrange(timestamp) %>% 
-# #   #filter(verb_id == "http://id.tincanapi.com/verb/updated")
-# #   filter(verb_id == "http://id.tincanapi.com/verb/replied")
-# #   
-# # s2 <- sequences2 %>% 
-# #   arrange(timestamp) %>% 
-# #   #filter(verb_id == "http://id.tincanapi.com/verb/updated")
-# #   filter(verb_id == "http://id.tincanapi.com/verb/replied")
+
+### find largest deletes: wiki post with highest negative wordcount ###
+# wiki_data2 <- wiki_data2 %>%
+#   arrange(textchange)
+#
+# ind <- which(wiki_data2$textchange == -460)
+# rows <- lapply(ind, function(wiki_data2) (wiki_data2-5):(wiki_data2+5))
+# # With unlist() you get all relevant rows
+# d1 <- wiki_data2[unlist(rows),]
+
+# ### *** test wordcount calc ###
+# s1 <- sequences %>%
+#   arrange(timestamp) %>%
+#   #filter(verb_id == "http://id.tincanapi.com/verb/updated")
+#   filter(verb_id == "http://id.tincanapi.com/verb/replied")
+#
+# s2 <- sequences2 %>%
+#   arrange(timestamp) %>%
+#   #filter(verb_id == "http://id.tincanapi.com/verb/updated")
+#   filter(verb_id == "http://id.tincanapi.com/verb/replied")
 ```
 
 ### READ PREPROCESSED DATASET; ADD EXPERIMANTAL CONDITIONS TO GROUPS; ADD DATE TO ACTIVITIES
