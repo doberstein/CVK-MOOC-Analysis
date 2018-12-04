@@ -1,0 +1,83 @@
+---
+title: "longest common substring"
+output: html_notebook
+---
+
+```{r}
+library(qualV)
+```
+
+
+```{r}
+find_data <- all_sequences %>% 
+  filter(type == "wiki")
+
+d1 <- find_data[22,]$content
+d2 <- find_data[23,]$content
+
+# deleted first sentence
+s1 <- "Und wie sollte am besten gehandelt werden? Im Folgenden wird anhand eines Rahmenmodells, dem medienökologischen Rahmenmodell, auf genau diese Punkte eingegangen und sinnvolle Handlungsempfehlungen für Kinder (4-8 Jahre), sowie junge Erwachsene (13-17 J.) generiert.Das medienökologische Rahmenmodell spricht sechs Faktoren an, die die Mediennutzung beeinflussen und sich gegenseitig bedingen. So scheinen die Medienwahl, bestimmte Medienmerkmale, mediales Kommunikationsverhalten, kurzfristige soziale Effekte, sowie langfristige sozialen Effekte von Bedeutung sein.Hinsichtlich der Medienwahl stellt sich die Frage, welches Medium ausgewählt wird und warum. So können medienbezogene (), personenbezogene () und interpersonale Faktoren ausschlagebend für die Wahl des Mediums sein. Medienmerkmale Auch das mediale Kommunikationsverhalten spielt eine entscheidende Rolle. So können die Merkmale der medialen Umgebung universelle bestimmte Effekte in der medialen Kommunikation bedingen. Aber auch nachteilige Merkmale der medialen Umgebung können durch ein modifiziertes Kommunikationsverhalten kompensiert werden, das heißt das Kommunikationsverhalten wird je nach Kontext angepasst. Individuen verhalten sich in computervermittelter Kommunikation anders als in face-to-face Situationen. Durch die Nutzung medientechnischer Optionen kann die Kommunikation verändert und gegebenenfalls sogar verbessert werden. Eine mediale Umgebung kann zu dem kurzfristige soziale Effekte auslösen.Langfristige      soziale Folgen "
+
+s2 <- "Die \"richtige\" Mediennutzung ist ein häufig diskutiertes Thema der heutigen Zeit, gerade unter Eltern. Doch was kann eigentlich alles bei der Mediennutzung schief laufen? Welche Faktoren sind zu beachten? Und wie sollte am besten gehandelt werden? Im Folgenden wird anhand eines Rahmenmodells, dem medienökologischen Rahmenmodell, auf genau diese Punkte eingegangen und sinnvolle Handlungsempfehlungen für Kinder (4-8 Jahre), sowie junge Erwachsene (13-17 J.) generiert.Das medienökologische Rahmenmodell spricht sechs Faktoren an, die die Mediennutzung beeinflussen und sich gegenseitig bedingen. So scheinen die Medienwahl, bestimmte Medienmerkmale, mediales Kommunikationsverhalten, kurzfristige soziale Effekte, sowie langfristige sozialen Effekte von Bedeutung zu sein. Ausgehend von der Person und ihrem medialen Kommunikationsverhalten, sowie individuellen Unterschieden, wird ein Medium gewählt (Medienwahl), unterschiedliche Medien weisen bestimmte Merkmale in verschiedenen Ausprägungen, wie Anonymität, Synchronität etc., auf. Das heißt die Wahl des Mediums bestimmt auch die Ausprägung verschiedener Medienmerkmale. Diese wiederum haben einen Einfluss auf die Nutzungssituation. Medien können in verschiedenen Situationen genutzt werden. Diese bedingt verschiedenen mediales Nutzungsverhalten, sowie kurzfristige soziale Effekte. Soziale Effekte wiederum können langfristige soziale Folgen mit sich bringen.Hinsichtlich der Medienwahl stellt sich die Frage, welches Medium ausgewählt wird und warum. So können medienbezogene (), personenbezogene () und interpersonale Faktoren ausschlagebend für die Wahl des Mediums sein. Medienmerkmale Auch das mediale Kommunikationsverhalten spielt eine entscheidende Rolle. So können die Merkmale der medialen Umgebung universelle bestimmte Effekte in der medialen Kommunikation bedingen. Aber auch nachteilige Merkmale der medialen Umgebung können durch ein modifiziertes Kommunikationsverhalten kompensiert werden, das heißt das Kommunikationsverhalten wird je nach Kontext angepasst. Individuen verhalten sich in computervermittelter Kommunikation anders als in face-to-face Situationen. Durch die Nutzung medientechnischer Optionen kann die Kommunikation verändert und gegebenenfalls sogar verbessert werden. Eine mediale Umgebung kann zu dem kurzfristige soziale Effekte auslösen.Langfristige      soziale Folgen "
+
+real_diff <- "Ausgehend von der Person und ihrem medialen Kommunikationsverhalten, sowie individuellen Unterschieden, wird ein Medium gewählt (Medienwahl), unterschiedliche Medien weisen bestimmte Merkmale in verschiedenen Ausprägungen, wie Anonymität, Synchronität etc., auf. Das heißt die Wahl des Mediums bestimmt auch die Ausprägung verschiedener Medienmerkmale. Diese wiederum haben einen Einfluss auf die Nutzungssituation. Medien können in verschiedenen Situationen genutzt werden. Diese bedingt verschiedenen mediales Nutzungsverhalten, sowie kurzfristige soziale Effekte. Soziale Effekte wiederum können langfristige soziale Folgen mit sich bringen"
+
+wordcount(s1)
+wordcount(s1_2)
+
+wordcount(s2)
+wordcount(s2_2)
+
+# current calculation for textdiff:
+wordcount(s2) - wordcount(s1)
+
+# real diff: 
+wordcount(real_diff)
+
+```
+
+```{r}
+t1 <- LCS(s1, s2)
+```
+
+```{r}
+a <- "Halllo"
+b <- "Hallo"
+Reduce(setdiff, strsplit(c(a, b), split = ""))
+
+t1 <- base::setdiff(strsplit(b, split = "")[[1]], strsplit(a, split = "")[[1]])
+t2 <- base::setdiff(strsplit(b, split = ""), strsplit(a, split = ""))
+t1
+t2
+
+
+t <- base::setdiff( strsplit(c(a, b), split = "")) 
+      
+
+
+a <- "Happy day"
+b <- "Tappy Pay"
+
+Reduce(setdiff, strsplit(c(a, b), split = ""))
+
+
+Reduce(setdiff, strsplit(c(s1, s2), split = ""))
+```
+
+
+
+```{r}
+s_all <- c(s1, s2)
+
+sapply(seq_along(s_all), function(i)
+    paste(LCS(strsplit(s_all[i], '')[[1]], strsplit(s_all[i], '')[[1]])$LCS,
+          collapse = ""))
+```
+```{r}
+s1_2 <- "Und wie sollte am besten gehandelt werden? Im Folgenden wird anhand eines Rahmenmodells, dem medienökologischen Rahmenmodell, auf genau diese Punkte eingegangen und sinnvolle Handlungsempfehlungen für Kinder (4-8 Jahre), sowie junge Erwachsene (13-17 J.) generiert.Das medienökologische Rahmenmodell spricht sechs Faktoren an, die die Mediennutzung beeinflussen und sich gegenseitig bedingen. So scheinen die Medienwahl, bestimmte Medienmerkmale, mediales Kommunikationsverhalten, kurzfristige soziale Effekte, sowie langfristige sozialen Effekte von Bedeutung sein.Hinsichtlich der Medienwahl stellt sich die Frage, welches Medium ausgewählt wird und warum. So können medienbezogene (), personenbezogene () und interpersonale Faktoren ausschlagebend für die Wahl des Mediums sein. Medienmerkmale Auch das mediale Kommunikationsverhalten spielt eine entscheidende Rolle. So können die Merkmale der medialen Umgebung universelle bestimmte Effekte in der medialen Kommunikation bedingen. Aber auch nachteilige Merkmale der medialen Umgebung können durch ein modifiziertes Kommunikationsverhalten kompensiert werden, das heißt das Kommunikationsverhalten wird je nach Kontext angepasst. Individuen verhalten sich in computervermittelter Kommunikation anders als in face-to-face Situationen. Durch die Nutzung medientechnischer Optionen kann die Kommunikation verändert und gegebenenfalls sogar verbessert werden. Eine mediale Umgebung kann zu dem kurzfristige soziale Effekte auslösen.Langfristige      soziale Folgen"
+
+s2_2 <- "Die \"richtige\" Mediennutzung ist ein häufig diskutiertes Thema der heutigen Zeit, gerade unter Eltern. Doch was kann eigentlich alles bei der Mediennutzung schief laufen? Welche Faktoren sind zu beachten? Und wie sollte am besten gehandelt werden? Im Folgenden wird anhand eines Rahmenmodells, dem medienökologischen Rahmenmodell, auf genau diese Punkte eingegangen und sinnvolle Handlungsempfehlungen für Kinder (4-8 Jahre), sowie junge Erwachsene (13-17 J.) generiert.Das medienökologische Rahmenmodell spricht sechs Faktoren an, die die Mediennutzung beeinflussen und sich gegenseitig bedingen. So scheinen die Medienwahl, bestimmte Medienmerkmale, mediales Kommunikationsverhalten, kurzfristige soziale Effekte, sowie langfristige sozialen Effekte von Bedeutung zu sein. Ausgehend von der Person und ihrem medialen Kommunikationsverhalten, sowie individuellen Unterschieden, wird ein Medium gewählt (Medienwahl), unterschiedliche Medien weisen bestimmte Merkmale in verschiedenen Ausprägungen, wie Anonymität, Synchronität etc., auf. Das heißt die Wahl des Mediums bestimmt auch die Ausprägung verschiedener Medienmerkmale. Diese wiederum haben einen Einfluss auf die Nutzungssituation. Medien können in verschiedenen Situationen genutzt werden. Diese bedingt verschiedenen mediales Nutzungsverhalten, sowie kurzfristige soziale Effekte. Soziale Effekte wiederum können langfristige soziale Folgen mit sich bringen.Hinsichtlich der Medienwahl stellt sich die Frage, welches Medium ausgewählt wird und warum. So können medienbezogene (), personenbezogene () und interpersonale Faktoren ausschlagebend für die Wahl des Mediums sein. Medienmerkmale Auch das mediale Kommunikationsverhalten spielt eine entscheidende Rolle. So können die Merkmale der medialen Umgebung universelle bestimmte Effekte in der medialen Kommunikation bedingen. Aber auch nachteilige Merkmale der medialen Umgebung können durch ein modifiziertes Kommunikationsverhalten kompensiert werden, das heißt das Kommunikationsverhalten wird je nach Kontext angepasst. Individuen verhalten sich in computervermittelter Kommunikation anders als in face-to-face Situationen. Durch die Nutzung medientechnischer Optionen kann die Kommunikation verändert und gegebenenfalls sogar verbessert werden. Eine mediale Umgebung kann zu dem kurzfristige soziale Effekte auslösen.Langfristige      soziale Folgen "
+```
+
+
+
