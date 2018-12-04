@@ -13,13 +13,13 @@ library(fpc)
 #READ DATA
 
 ```{r}
-# t1_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_activities_2.csv", stringsAsFactors = F) %>% 
+# t1_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_activities_2.csv", stringsAsFactors = F) %>%
 #   subset(select=-X)
 # 
-# t2_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_activities_2.csv", stringsAsFactors = F) %>% 
+# t2_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_activities_2.csv", stringsAsFactors = F) %>%
 #   subset(select=-X)
 # 
-# t3_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_activities_2.csv", stringsAsFactors = F) %>% 
+# t3_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_activities_2.csv", stringsAsFactors = F) %>%
 #   subset(select=-X)
 # 
 # all_sequences <- bind_rows(t1_sequences, t2_sequences, t3_sequences)
@@ -79,9 +79,11 @@ all_sequences$class[all_sequences$type == "forum"] <- "communication"
 # !!! Zeitumstellung 28.10.2018 !!!
 
 # Task 1
+# UTC+2 (Sommerzeit)
 # task_start:   1539597600    (15.10.18 12:00 CEST)
 # task_end:     1540767600    (28.10.18 24:00 CEST)
 
+# UTC+1 (Winterzeit)
 # Task 2
 # task_start:   1540810800    (29.10.18 12:00 CEST)
 # task_end:     1541977200    (11.11.18 24:00 CEST)
@@ -173,6 +175,7 @@ all_sequences$class[all_sequences$type == "forum"] <- "communication"
 all_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities_with_start.csv", stringsAsFactors = F) %>% subset(select=-X)
   
 
+
 ```
 
 
@@ -216,7 +219,7 @@ generateSequence <- function(df) {
 }
 
 
-all_sequences_with_start %>% 
+all_sequences %>% 
   group_by(group_id) %>% 
   do(generateSequence(.))
 
@@ -225,7 +228,6 @@ all_sequences_with_start %>%
 ```
 
 ```{r}
-
 relevant_actions <- c("start", "communication", "major contribution", "minor contribution")
 # create state sequence object from all sequences
 sequences <- seqdef(named_sequences)
@@ -238,7 +240,7 @@ submat[paste(relevant_actions, "->", sep=""), "gap->"] <- 2
 distances <<- seqdist(sequences, method = "OM", sm=submat)
 distances_manual <<- distances
 
-numClusters <- 3
+numClusters <- 2
 clustersPamk <- pamk(distances, krange = numClusters, diss = TRUE, usepam = T)$pamobject$clustering
 membership_manual <<- clustersPamk
 
@@ -251,14 +253,9 @@ print(cluster.stats(distances, clustersPamk, silhouette = T, G2 = T, G3 = T, wga
 
 #diagram <- seqiplot(sequences, group = clusterNames, cex.plot = 1, cex.legend = 2, axes = F, cols = 1)
 diagram <- seqiplot(sequences, group = clusterNames, idxs = 40)
-
-
-list(clustering=clustersPamk, plot=diagram)
 ```
-
 
 ```{r}
-
 relevant_actions <- c("start", "communication", "major contribution", "minor contribution")
 # create state sequence object from all sequences
 sequences <- seqdef(named_sequences)
@@ -275,20 +272,8 @@ numClusters <- 3
 clustersPamk <- pamk(distances, krange = numClusters, diss = TRUE, usepam = T)$pamobject$clustering
 membership_manual <<- clustersPamk
 
-#clustersPamkComplete <- pamk(distances, krange = numClusters, diss = TRUE)
-#clustersApclust <- apcluster(distances)
-
-#transformClust <- 1:19
-#transformClust[clustersApclust@clusters[[1]]] <- 1
-#transformClust[clustersApclust@clusters[[2]]] <- 2
-
 # for pamk
 clusterNames <- factor(clustersPamk, labels=paste("Type", 1:numClusters))
-
-#for apclust
-#clusterNames <- factor(transformClust, labels=paste("Type", 1:2))
-
-#print(cluster.stats(distances, transformClust, silhouette = T, G2 = T, G3 = T, wgap = T))
 
 # print cluster statistics for pam clustering
 print(cluster.stats(distances, clustersPamk, silhouette = T, G2 = T, G3 = T, wgap = T))
@@ -296,12 +281,62 @@ print(cluster.stats(distances, clustersPamk, silhouette = T, G2 = T, G3 = T, wga
 
 #diagram <- seqiplot(sequences, group = clusterNames, cex.plot = 1, cex.legend = 2, axes = F, cols = 1)
 diagram <- seqiplot(sequences, group = clusterNames, idxs = 40)
-
-
-list(clustering=clustersPamk, plot=diagram)
 ```
 
+```{r}
+relevant_actions <- c("start", "communication", "major contribution", "minor contribution")
+# create state sequence object from all sequences
+sequences <- seqdef(named_sequences)
+
+#calculate distances for
+#submat <- seqsubm(sequences, method="TRATE")
+submat <- seqsubm(sequences, method="CONSTANT", cval = 1)
+submat["gap->",paste(relevant_actions, "->", sep="")] <- 2
+submat[paste(relevant_actions, "->", sep=""), "gap->"] <- 2
+distances <<- seqdist(sequences, method = "OM", sm=submat)
+distances_manual <<- distances
+
+numClusters <- 4
+clustersPamk <- pamk(distances, krange = numClusters, diss = TRUE, usepam = T)$pamobject$clustering
+membership_manual <<- clustersPamk
+
+# for pamk
+clusterNames <- factor(clustersPamk, labels=paste("Type", 1:numClusters))
+
+# print cluster statistics for pam clustering
+print(cluster.stats(distances, clustersPamk, silhouette = T, G2 = T, G3 = T, wgap = T))
 
 
+#diagram <- seqiplot(sequences, group = clusterNames, cex.plot = 1, cex.legend = 2, axes = F, cols = 1)
+diagram <- seqiplot(sequences, group = clusterNames, idxs = 40)
+```
+
+```{r}
+relevant_actions <- c("start", "communication", "major contribution", "minor contribution")
+# create state sequence object from all sequences
+sequences <- seqdef(named_sequences)
+
+#calculate distances for
+#submat <- seqsubm(sequences, method="TRATE")
+submat <- seqsubm(sequences, method="CONSTANT", cval = 1)
+submat["gap->",paste(relevant_actions, "->", sep="")] <- 2
+submat[paste(relevant_actions, "->", sep=""), "gap->"] <- 2
+distances <<- seqdist(sequences, method = "OM", sm=submat)
+distances_manual <<- distances
+
+numClusters <- 6
+clustersPamk <- pamk(distances, krange = numClusters, diss = TRUE, usepam = T)$pamobject$clustering
+membership_manual <<- clustersPamk
+
+# for pamk
+clusterNames <- factor(clustersPamk, labels=paste("Type", 1:numClusters))
+
+# print cluster statistics for pam clustering
+print(cluster.stats(distances, clustersPamk, silhouette = T, G2 = T, G3 = T, wgap = T))
+
+
+#diagram <- seqiplot(sequences, group = clusterNames, cex.plot = 1, cex.legend = 2, axes = F, cols = 1)
+diagram <- seqiplot(sequences, group = clusterNames, idxs = 40)
+```
 
 
