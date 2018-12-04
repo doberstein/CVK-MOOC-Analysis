@@ -117,7 +117,7 @@ group_154
 ```{r}
 one_group <- all_sequences %>% 
   filter(group_id == 154) %>% 
-  filter(!user_id == "start")
+  filter(!user_id == "start") 
 ```
 
 ### ACTIVITY COUNT PER USER PER GROUP
@@ -150,6 +150,11 @@ activity_count_for_all_users
 ```{r}
 wordcount_for_active_users <- all_sequences %>% 
   filter(!user_id == "start") %>% 
+  # filter(period <= 3) %>%  filter out activities after day 3
+  # filter(period <= 7) %>%  filter out activities after day 3
+  # filter(period <= 10) %>%  filter out activities after day 3
+  # filter(period <= 12) %>%  filter out activities after day 3
+  # filter(period <= 14) %>%  filter out activities after day 3
   group_by(group_id, user_id) %>% 
   summarise(overall_wordcount = sum(wordcount))
 
@@ -164,8 +169,6 @@ missing <- anti_join(add_groups_and_users, wordcount_for_active_users, by = c("g
 wordcount_for_all_users <- full_join(missing, wordcount_for_active_users)
 
 wordcount_for_all_users <- addConditions(wordcount_for_all_users)
-
-wordcount_for_all_users
 ```
 
 ## FORUM WORDCOUNT FOR EACH USER
@@ -186,8 +189,6 @@ missing <- anti_join(add_groups_and_users, forum_wordcount_for_active_users, by 
 
 forum_wordcount_for_all_users <- full_join(missing, forum_wordcount_for_active_users) %>% 
   addConditions()
-
-forum_wordcount_for_all_users
 
 ```
 
@@ -255,7 +256,8 @@ complete_wordcount_data <- merge(wordcount_for_all_users, forum_wordcount_for_al
 forum_latency <- all_sequences %>% 
   filter(type == "forum" | type == "start") %>% 
   group_by(group_id) %>% 
-  mutate(forum_latency_sec = timestamp - lag(timestamp))
+  mutate(forum_latency_sec = timestamp - lag(timestamp)) %>% 
+  addConditions()
 ```
 
 ## AVERAGE TIME BETWEEN FORUM POSTS BY GROUP
@@ -270,7 +272,9 @@ forum_activity_count_by_group <- forum_latency %>%
   group_by(group_id) %>% 
   summarise(forum_activity_count = n())
 
-forum_data <- merge(forum_latency_by_group, forum_activity_count_by_group)
+forum_data <- merge(forum_latency_by_group, forum_activity_count_by_group) %>% 
+  addConditions()
+
 ```
 
 
@@ -316,7 +320,7 @@ task1_activities_Ko <- task1_activities %>%
 
 # all task 1 activities for one group (154)
 task1_activities_154 <- task1_activities %>% 
-  filter(group_id == 154)
+  filter(group_id == 154) %>% 
 ```
 
 
@@ -355,6 +359,7 @@ wordcount_for_all_users_3d <- addConditions(wordcount_for_all_users_3d)
 gini_coeff_3d <- wordcount_for_all_users_3d %>% 
   group_by(group_id) %>% 
   summarize(gini_3d = gini(wordcount_3d)*length(wordcount_3d)/(length(wordcount_3d)-1))
+
 ```
 ### WORDCOUNTS AND GINI AFTER DAY 7
 ```{r}
