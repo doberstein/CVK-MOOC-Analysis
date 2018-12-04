@@ -4,20 +4,42 @@ output: html_notebook
 ---
 
 ```{r}
-groups_and_users_task1 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_groups_and_users.csv", stringsAsFactors = F) %>% 
+groups_and_users_task1 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_groups_and_users.csv", stringsAsFactors = F) %>%
   subset(select = -X)
 
-groups_and_users_task2 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_groups_and_users.csv", stringsAsFactors = F) %>% 
+groups_and_users_task2 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_groups_and_users.csv", stringsAsFactors = F) %>%
   subset(select = -X)
 
-groups_and_users_task3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_groups_and_users.csv", stringsAsFactors = F) %>% 
+groups_and_users_task3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_groups_and_users.csv", stringsAsFactors = F) %>%
   subset(select = -X)
 
-all_groups_and_users <- bind_rows(groups_and_users_task1, groups_and_users_task2, groups_and_users_task3)
+all_groups_and_users <- bind_rows(groups_and_users_task1, groups_and_users_task2, groups_and_users_task3) %>%
+  filter(!condition == "KR")
 
 write.csv2(all_groups_and_users, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/all_groups_and_users.csv", row.names = F)
 
 all_groups_and_users <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/all_groups_and_users.csv", stringsAsFactors = F)
+
+```
+
+```{r}
+t2 <- all_groups_and_users %>% 
+  arrange(user_id)
+
+t1 <- wordcount_for_all_users %>% 
+  arrange(user_id)
+
+t1$user_id == t2$user_id
+
+setdiff(t2$user_id,t1$user_id)
+
+unique(t2$user_id)
+unique(t1$user_id)
+
+length(t1)
+```
+
+```{r}
 
 ```
 
