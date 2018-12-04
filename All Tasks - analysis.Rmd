@@ -5,6 +5,7 @@ output: html_notebook
 
 ```{r}
 source("setup.R")
+source("util.R")
 ```
 
 
@@ -56,6 +57,14 @@ task3_changing_wiki_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/
   subset(select = -X)
 
 
+## all activity sequences
+all_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities_with_start.csv", stringsAsFactors = F) %>% subset(select=-c(X, class)) %>% 
+  addTask()
+
+## all groups and users
+all_groups_and_users <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/all_groups_and_users.csv", stringsAsFactors = F) %>% 
+  filter(!condition == "KR") %>% 
+  addTask()
 ```
 
 
@@ -102,8 +111,134 @@ ggplot(all_work_distribution_for_condition, aes(x=period, y=average_gini, group=
   scale_x_continuous(labels = days, breaks = c(1:14))
 
 ```
+
+## ACTIVITY RANKING 
+```{r}
+# rank users by number of activities
+# activities over all
+# only forum / wiki activities
+
+# # Task1
+# c(154:174)] <- "task1"
+# # Task2
+# c(187:202)] <- "task2"
+# # Task3
+# c(211:224)] <- "task3"
+
+#normalize ranks:
+# raning n - 1 (n: best ranking)
+# normalization: (r - 1) / (R - 1)
+
+task1_sequences <- all_sequences %>% 
+  filter(task == "task1") %>% 
+  filter(!user_id == "start") %>% 
+  filter(type == "wiki")
+
+task2_sequences <- all_sequences %>% 
+  filter(task == "task2") %>% 
+  filter(!user_id == "start") %>% 
+  filter(type == "wiki")
+  
+
+task3_sequences <- all_sequences %>% 
+  filter(task == "task3") %>% 
+  filter(!user_id == "start") %>% 
+  filter(type == "wiki")
+
+
+## count activities for users: task1
+task1_user_activity_count <- task1_sequences %>% 
+  group_by(user_id) %>% 
+  summarise(user_activity_count = n())
+
+task1_user_activity_count <- merge(task1_user_activity_count, all_groups_and_users) %>% 
+  filter(group_id %in% c(154:174)) %>% 
+  arrange(desc(user_activity_count)) %>% 
+  mutate(rank = (c(nrow(task1_user_activity_count):1)))
+
+# normalize rank to range between 1 and 0
+task1_user_activity_count$rank <- (task1_user_activity_count$rank - 1) / (nrow(task1_user_activity_count) -1)
+
+# ***
+
+## count activities for users: task2
+task2_user_activity_count <- task2_sequences %>% 
+  group_by(user_id) %>% 
+  summarise(user_activity_count = n())
+
+task2_user_activity_count <- merge(task2_user_activity_count, all_groups_and_users) %>% 
+  filter(group_id %in% c(187:202)) %>% 
+  arrange(desc(user_activity_count)) %>% 
+  mutate(rank = c(nrow(task2_user_activity_count):1))
+
+# normalize rank to range between 1 and 0
+task2_user_activity_count$rank <- (task2_user_activity_count$rank - 1) / (nrow(task2_user_activity_count) -1)
+
+# ***
+
+## count activities for users: task3
+task3_user_activity_count <- task3_sequences %>% 
+  group_by(user_id) %>% 
+  summarise(user_activity_count = n())
+
+task3_user_activity_count <- merge(task3_user_activity_count, all_groups_and_users) %>% 
+  filter(group_id %in% c(211:224)) %>% 
+  arrange(desc(user_activity_count)) %>% 
+  mutate(rank = c(nrow(task3_user_activity_count):1))
+
+# normalize rank to range between 1 and 0
+task3_user_activity_count$rank <- (task3_user_activity_count$rank - 1) / (nrow(task3_user_activity_count) -1)
+
+#View(task1_user_activity_count)
+
+
+```
+
+```{r}
+task1_ranking <- task1_user_activity_count %>% 
+  group_by(condition) %>% 
+  summarise(t1_average_rank = mean(rank))
+
+task2_ranking <- task2_user_activity_count %>% 
+  group_by(condition) %>% 
+  summarise(t2_average_rank = mean(rank))
+
+task3_ranking <- task3_user_activity_count %>% 
+  group_by(condition) %>% 
+  summarise(t3_average_rank = mean(rank))
+
+ranking_merge <- merge(task1_ranking, task2_ranking) %>% 
+  merge(task3_ranking)
+
+
+all_rankings <- rbind(task1_user_activity_count, task2_user_activity_count, task3_user_activity_count)
+
+all_average_rank <- all_rankings %>%
+  group_by(condition) %>% 
+  summarise(overall_average_rank = mean(rank))
+
+ranking_merge <- ranking_merge %>% 
+  merge(all_average_rank)
+
+# for only forum / only wiki?
+
+```
+
 ```{r}
 
+# changed filters by hand (all/wiki/forum) and saved data
+# all_activities_ranking <- ranking_merge
+# forum_activity_ranking <- ranking_merge
+# wiki_activity_ranking <- ranking_merge
+
+# write.csv2(all_activities_ranking, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/all_activities_ranking.csv", row.names = F)
+# write.csv2(forum_activity_ranking, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/forum_activities_ranking.csv", row.names = F)
+# write.csv2(wiki_activity_ranking, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/wiki_activities_ranking.csv", row.names = F)
+
+
+all_activities_ranking <- read.csv2( "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/all_activities_ranking.csv", stringsAsFactors = F)
+forum_activity_ranking <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/forum_activities_ranking.csv", stringsAsFactors = F)
+wiki_activity_ranking <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/wiki_activities_ranking.csv", stringsAsFactors = F)
 
 ```
 
