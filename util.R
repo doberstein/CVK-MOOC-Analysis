@@ -58,7 +58,120 @@ calculateActivityCount <- function(df) {
   df
 }
 
+# calculate activity count for each group for sub-sequence
+calculateUserActivityCount <- function(df) {
+  df <- df %>% 
+    group_by(group_id, user_id) %>% 
+    summarise(activity_count = n())
+  df
+}
+
 addValues <- function (df1, df2, id) {
   df2$period <- id
   rbind(df1, df2)
+}
+
+
+
+# df2 <- df
+# df2$new_rank <- cut(df$activity_count, length(unique(df$activity_count)), labels = F)
+# 
+# 
+# df2 <- df
+# current_rank <- 1
+# rank_counter <- 1
+# #i = 1
+# df2$new_rank <- NA
+# df2 <- df2 %>% 
+#   arrange(desc(activity_count))
+# df2[1,]$new_rank <- current_rank
+# for (i in 2:nrow(df2)) {
+#   if (df2[i,]$activity_count == df2[i-1,]$activity_count) {
+#     # keep same rank
+#     df2[i,]$new_rank <- current_rank
+#     rank_counter <<- rank_counter + 1
+#   } else {
+#     # increase rank
+#     rank_counter <- rank_counter + 1
+#     current_rank <<- rank_counter
+#     df2[i,]$new_rank <- current_rank
+#   }
+# } 
+# View(df2)
+
+
+#df2$new_rank <- rank(df$activity_count)
+
+# length(unique(df$activity_count))
+
+# ranking based on overall standing (1:n) where activitiy_count decides the rank and same activity_count results in the same rank
+addActivityRank <- function(data1) {
+  browser()
+  current_rank <- 1
+  rank_counter <- 1
+  data1$rank <- NA
+  browser()
+  data1 <- data1 %>% 
+    arrange(desc(activity_count))
+  data1[1,]$rank <<- current_rank
+  for (i in 2:nrow(data1)) {
+    if (data1[i,]$activity_count == data1[i-1,]$activity_count) {
+      # keep same rank
+      data1[i,]$rank <- current_rank
+      rank_counter <- rank_counter + 1
+    } else {
+      # increase rank
+      rank_counter <- rank_counter + 1
+      current_rank <- rank_counter
+      data1[i,]$rank <- current_rank
+    }
+   # browser()
+  } 
+  #browser()
+  
+  data1
+}
+
+
+addActivityRank2 <- function(df) {
+  current_rank <- 1
+  rank_counter <- 1
+  df$rank <- NA
+  #browser()
+  df <- df %>% 
+    arrange(desc(activity_count))
+  df[1,]$rank <- current_rank
+  if(nrow(df) > 1) {
+    for (i in 2:nrow(df)) {
+      if (df[i,]$activity_count == df[i-1,]$activity_count) {
+        # keep same rank
+        df[i,]$rank <- current_rank
+        rank_counter <- rank_counter + 1
+      } else {
+        # increase rank
+        rank_counter <- rank_counter + 1
+        current_rank <- rank_counter
+        df[i,]$rank <- current_rank
+      }
+      # browser()
+    }
+  }
+   
+  #browser()
+  
+  df
+}
+
+
+addActivityRankingClass <- function (df) {
+  
+### CLASSIFY INTO 3 CATEGORIES
+### ADDING RANK BASED ON ACTIVITY COUNT
+### RANK1: TOP THIRD
+### RANK2: MEDIUM THIRD
+### RANK3: BOTTOM THIRD
+  df$activity_rank <- cut(df$activity_count, 3, labels = F)
+
+  df
+  
 }
