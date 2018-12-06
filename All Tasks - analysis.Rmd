@@ -242,3 +242,74 @@ wiki_activity_ranking <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK M
 
 ```
 
+```{r}
+all_activities_ranking
+```
+```{r}
+task1_changing_gini <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_changing_gini.csv", stringsAsFactors = F) %>% 
+  subset(select = -X) %>%
+  filter(condition %in% c("Ko", "M", "MG"))
+task2_changing_gini <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_changing_gini.csv", stringsAsFactors = F) %>% 
+  subset(select = -X) %>%
+  filter(condition %in% c("Ko", "M", "MG"))
+task3_changing_gini <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_changing_gini.csv", stringsAsFactors = F) %>% 
+  subset(select = -X) %>%
+  filter(condition %in% c("Ko", "M", "MG"))
+```
+
+
+
+```{r}
+task1_changing_gini
+task2_changing_gini$period <- task2_changing_gini$period + 15
+task3_changing_gini$period <- task3_changing_gini$period + 30
+
+all_tasks_changing_gini <- rbind(task1_changing_gini, task2_changing_gini, task3_changing_gini)
+
+all_tasks_average_gini <- all_tasks_changing_gini %>% 
+  group_by(period, condition) %>% 
+  filter(!is.na(gini_index)) %>% 
+  summarise(average_gini = mean(gini_index))
+
+
+# # adding 0 row between task1-task2 and task2-task3
+all_tasks_average_gini[nrow(all_tasks_average_gini)+1,] <- c(period = 15, condition = "Ko", average_gini = 1)
+all_tasks_average_gini[nrow(all_tasks_average_gini)+1,] <- c(period = 15, condition = "M", average_gini = 1)
+all_tasks_average_gini[nrow(all_tasks_average_gini)+1,] <- c(period = 15, condition = "MG", average_gini = 1)
+
+all_tasks_average_gini[nrow(all_tasks_average_gini)+1,] <- c(period = 30, condition = "Ko", average_gini = 1)
+all_tasks_average_gini[nrow(all_tasks_average_gini)+1,] <- c(period = 30, condition = "M", average_gini = 1)
+all_tasks_average_gini[nrow(all_tasks_average_gini)+1,] <- c(period = 30, condition = "MG", average_gini = 1)
+
+all_tasks_average_gini <- all_tasks_average_gini %>% 
+  arrange(as.numeric(period))
+
+
+# overall_activity_distribution_for_condition[nrow(overall_activity_distribution_for_condition)+1,] <- c(period = 15, condition = "Ko", accum_activity_count = 0, norm_accum_activity_count = 0)
+# overall_activity_distribution_for_condition[nrow(overall_activity_distribution_for_condition)+1,] <- c(period = 15, condition = "M", accum_activity_count = 0, norm_accum_activity_count = 0)
+# overall_activity_distribution_for_condition[nrow(overall_activity_distribution_for_condition)+1,] <- c(period = 15, condition = "MG", accum_activity_count = 0, norm_accum_activity_count = 0)
+# 
+# overall_activity_distribution_for_condition[nrow(overall_activity_distribution_for_condition)+1,] <- c(period = 30, condition = "Ko", accum_activity_count = 0, norm_accum_activity_count = 0)
+# overall_activity_distribution_for_condition[nrow(overall_activity_distribution_for_condition)+1,] <- c(period = 30, condition = "M", accum_activity_count = 0, norm_accum_activity_count = 0)
+# overall_activity_distribution_for_condition[nrow(overall_activity_distribution_for_condition)+1,] <- c(period = 30, condition = "MG", accum_activity_count = 0, norm_accum_activity_count = 0)
+# 
+# overall_activity_distribution_for_condition <- overall_activity_distribution_for_condition %>% 
+#   arrange(as.numeric(period))
+```
+```{r}
+ggplot(all_tasks_average_gini, aes(x=as.numeric(period), y=as.numeric(average_gini), group=condition)) +
+  geom_line(aes(color=condition))+
+  geom_point(aes(color=condition))
+```
+# remove lines between tasks
+```{r}
+rem_lines <- all_tasks_average_gini
+
+rem_lines[40:42,]$average_gini <- NA
+rem_lines[81:83,]$average_gini <- NA
+
+ggplot(rem_lines, aes(x=as.numeric(period), y=as.numeric(average_gini), group=condition)) +
+  geom_line(aes(color=condition))+
+  geom_point(aes(color=condition))
+```
+
