@@ -7,6 +7,10 @@ output: html_notebook
 library(ggplot2)
 library(dplyr)
 ```
+```{r}
+source("util.R")
+```
+
 
 
 ## task 1 all activities
@@ -111,8 +115,8 @@ changing_activity_count <- addValues(changing_activity_count, activity_counts_da
 # task2_changing_activity_count <- changing_activity_count
 # write.csv2(task2_changing_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_overall_changing_activity_count.csv", row.names = F)
 # 
-task3_changing_activity_count <- changing_activity_count
-write.csv2(task3_changing_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_overall_changing_activity_count.csv", row.names = F)
+# task3_changing_activity_count <- changing_activity_count
+# write.csv2(task3_changing_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_overall_changing_activity_count.csv", row.names = F)
 
 
 # OVERALL ACTIVITY COUNT
@@ -138,6 +142,8 @@ task3_overall_changing_activity_count$period <- task3_overall_changing_activity_
 
 ```{r}
 all_tasks_overall_changing_activity_count <- rbind(task1_overall_changing_activity_count, task2_overall_changing_activity_count, task3_overall_changing_activity_count)
+
+for_groups <- all_tasks_overall_changing_activity_count
 ```
 
 ```{r}
@@ -153,24 +159,29 @@ overall_activity_distribution_for_condition$norm_accum_activity_count <- NA
 ### Task1: Integrationsmodelle 
 ### GruppenIDs: 154 - 174
 # task1: period 1  - 14
-#   Ko: 6
-#   M:  6
-#   MG: 6
+#   Ko: 6 (23) Groups (User)
+#   M:  6 (23)
+#   MG: 6 (22)
 #
 ### Task2: Soziale Präsenz
 ### GruppenIDs: 187 - 202
 # task2: period 15 - 28
-#   Ko: 6
-#   M:  5
-#   MG: 5
+#   Ko: 6 (23)
+#   M:  5 (20)
+#   MG: 5 (19)
 #   
 ### Task3: Brainstorming
 ### GruppenIDs: 211 - 224
 # task3: period 29 - 42
-#   Ko: 5
-#   M:  4
-#   MG: 4
+#   Ko: 5 (20)
+#   M:  4 (17)
+#   MG: 4 (18)
 
+count_users <- all_groups_and_users %>% 
+  filter(task == "task3") %>% 
+  filter(condition == "MG")
+
+# ### NEW NORMALIZATION BY NUMBER OF USERS PER CONDITION
 # TASK1
 # find indices for task1 entries for each condition
 task1_Ko <- overall_activity_distribution_for_condition$period %in% c(1:14) & overall_activity_distribution_for_condition$condition == "Ko"
@@ -178,9 +189,9 @@ task1_M <- overall_activity_distribution_for_condition$period %in% c(1:14) & ove
 task1_MG <- overall_activity_distribution_for_condition$period %in% c(1:14) & overall_activity_distribution_for_condition$condition == "MG"
 
 # normalize activity counts by dividing by the number of groups for each condition
-overall_activity_distribution_for_condition$norm_accum_activity_count[task1_Ko] <- overall_activity_distribution_for_condition$accum_activity_count[task1_Ko]/6
-overall_activity_distribution_for_condition$norm_accum_activity_count[task1_M] <- overall_activity_distribution_for_condition$accum_activity_count[task1_M]/6
-overall_activity_distribution_for_condition$norm_accum_activity_count[task1_MG] <- overall_activity_distribution_for_condition$accum_activity_count[task1_MG]/6
+overall_activity_distribution_for_condition$norm_accum_activity_count[task1_Ko] <- overall_activity_distribution_for_condition$accum_activity_count[task1_Ko]/23
+overall_activity_distribution_for_condition$norm_accum_activity_count[task1_M] <- overall_activity_distribution_for_condition$accum_activity_count[task1_M]/23
+overall_activity_distribution_for_condition$norm_accum_activity_count[task1_MG] <- overall_activity_distribution_for_condition$accum_activity_count[task1_MG]/22
 
 
 # TASK2
@@ -190,9 +201,9 @@ task2_M <- overall_activity_distribution_for_condition$period %in% c(15:28) & ov
 task2_MG <- overall_activity_distribution_for_condition$period %in% c(15:28) & overall_activity_distribution_for_condition$condition == "MG"
 
 # normalize activity counts by dividing by the number of groups for each condition
-overall_activity_distribution_for_condition$norm_accum_activity_count[task2_Ko] <- overall_activity_distribution_for_condition$accum_activity_count[task2_Ko]/6
-overall_activity_distribution_for_condition$norm_accum_activity_count[task2_M] <- overall_activity_distribution_for_condition$accum_activity_count[task2_M]/5
-overall_activity_distribution_for_condition$norm_accum_activity_count[task2_MG] <- overall_activity_distribution_for_condition$accum_activity_count[task2_MG]/5
+overall_activity_distribution_for_condition$norm_accum_activity_count[task2_Ko] <- overall_activity_distribution_for_condition$accum_activity_count[task2_Ko]/23
+overall_activity_distribution_for_condition$norm_accum_activity_count[task2_M] <- overall_activity_distribution_for_condition$accum_activity_count[task2_M]/20
+overall_activity_distribution_for_condition$norm_accum_activity_count[task2_MG] <- overall_activity_distribution_for_condition$accum_activity_count[task2_MG]/19
 
 # TASK3
 # find indices for task3 entries for each condition
@@ -201,9 +212,44 @@ task3_M <- overall_activity_distribution_for_condition$period %in% c(29:42) & ov
 task3_MG <- overall_activity_distribution_for_condition$period %in% c(29:42) & overall_activity_distribution_for_condition$condition == "MG"
 
 # normalize activity counts by dividing by the number of groups for each condition
-overall_activity_distribution_for_condition$norm_accum_activity_count[task3_Ko] <- overall_activity_distribution_for_condition$accum_activity_count[task3_Ko]/5
-overall_activity_distribution_for_condition$norm_accum_activity_count[task3_M] <- overall_activity_distribution_for_condition$accum_activity_count[task3_M]/4
-overall_activity_distribution_for_condition$norm_accum_activity_count[task3_MG] <- overall_activity_distribution_for_condition$accum_activity_count[task3_MG]/4
+overall_activity_distribution_for_condition$norm_accum_activity_count[task3_Ko] <- overall_activity_distribution_for_condition$accum_activity_count[task3_Ko]/20
+overall_activity_distribution_for_condition$norm_accum_activity_count[task3_M] <- overall_activity_distribution_for_condition$accum_activity_count[task3_M]/17
+overall_activity_distribution_for_condition$norm_accum_activity_count[task3_MG] <- overall_activity_distribution_for_condition$accum_activity_count[task3_MG]/18
+
+# ### OLD NORMALIZATION BY NUMBER OF GROUPS
+# # TASK1
+# # find indices for task1 entries for each condition
+# task1_Ko <- overall_activity_distribution_for_condition$period %in% c(1:14) & overall_activity_distribution_for_condition$condition == "Ko"
+# task1_M <- overall_activity_distribution_for_condition$period %in% c(1:14) & overall_activity_distribution_for_condition$condition == "M"
+# task1_MG <- overall_activity_distribution_for_condition$period %in% c(1:14) & overall_activity_distribution_for_condition$condition == "MG"
+# 
+# # normalize activity counts by dividing by the number of groups for each condition
+# overall_activity_distribution_for_condition$norm_accum_activity_count[task1_Ko] <- overall_activity_distribution_for_condition$accum_activity_count[task1_Ko]/6
+# overall_activity_distribution_for_condition$norm_accum_activity_count[task1_M] <- overall_activity_distribution_for_condition$accum_activity_count[task1_M]/6
+# overall_activity_distribution_for_condition$norm_accum_activity_count[task1_MG] <- overall_activity_distribution_for_condition$accum_activity_count[task1_MG]/6
+# 
+# 
+# # TASK2
+# # find indices for task2 entries for each condition
+# task2_Ko <- overall_activity_distribution_for_condition$period %in% c(15:28) & overall_activity_distribution_for_condition$condition == "Ko"
+# task2_M <- overall_activity_distribution_for_condition$period %in% c(15:28) & overall_activity_distribution_for_condition$condition == "M"
+# task2_MG <- overall_activity_distribution_for_condition$period %in% c(15:28) & overall_activity_distribution_for_condition$condition == "MG"
+# 
+# # normalize activity counts by dividing by the number of groups for each condition
+# overall_activity_distribution_for_condition$norm_accum_activity_count[task2_Ko] <- overall_activity_distribution_for_condition$accum_activity_count[task2_Ko]/6
+# overall_activity_distribution_for_condition$norm_accum_activity_count[task2_M] <- overall_activity_distribution_for_condition$accum_activity_count[task2_M]/5
+# overall_activity_distribution_for_condition$norm_accum_activity_count[task2_MG] <- overall_activity_distribution_for_condition$accum_activity_count[task2_MG]/5
+# 
+# # TASK3
+# # find indices for task3 entries for each condition
+# task3_Ko <- overall_activity_distribution_for_condition$period %in% c(29:42) & overall_activity_distribution_for_condition$condition == "Ko"
+# task3_M <- overall_activity_distribution_for_condition$period %in% c(29:42) & overall_activity_distribution_for_condition$condition == "M"
+# task3_MG <- overall_activity_distribution_for_condition$period %in% c(29:42) & overall_activity_distribution_for_condition$condition == "MG"
+# 
+# # normalize activity counts by dividing by the number of groups for each condition
+# overall_activity_distribution_for_condition$norm_accum_activity_count[task3_Ko] <- overall_activity_distribution_for_condition$accum_activity_count[task3_Ko]/5
+# overall_activity_distribution_for_condition$norm_accum_activity_count[task3_M] <- overall_activity_distribution_for_condition$accum_activity_count[task3_M]/4
+# overall_activity_distribution_for_condition$norm_accum_activity_count[task3_MG] <- overall_activity_distribution_for_condition$accum_activity_count[task3_MG]/4
 ```
 
 ```{r}
@@ -245,7 +291,7 @@ overall_activity_distribution_for_condition <- overall_activity_distribution_for
 ```
 
 ```{r}
-# write.csv2(overall_activity_distribution_for_condition, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/wiki_activitiy_distribution_for_condition.csv", row.names = F)
+# write.csv2(overall_activity_distribution_for_condition, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/overall_activitiy_distribution_for_condition.csv", row.names = F)
 
 overall_activity_distribution_for_condition <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/overall_activitiy_distribution_for_condition.csv", stringsAsFactors = F)
 
@@ -276,7 +322,29 @@ wiki_activity_distribution_for_condition <- read.csv2("/home/doberstein/Dropbox/
 ggplot(overall_activity_distribution_for_condition, aes(x=period, y=as.numeric(norm_accum_activity_count), group=condition)) +
   geom_line(aes(color=condition))+
   geom_point(aes(color=condition))
+
+#ggsave("consecutive_activity_counts.png", width = 20, height = 10)
 ```
+# remove lines between tasks
+```{r}
+t1 <- overall_activity_distribution_for_condition
+
+t1[35:37,]$norm_accum_activity_count <- NA
+t1[67:69,]$norm_accum_activity_count <- NA
+
+ggplot(t1, aes(x=period, y=as.numeric(norm_accum_activity_count), group=condition)) +
+  geom_line(aes(color=condition))+
+  geom_point(aes(color=condition))
+
+```
+```{r}
+t2 <- all_sequences %>% 
+  filter(task == "task2") %>% 
+  filter(condition == "MG")
+```
+
+
+
 ```{r}
 ggplot(forum_activity_distribution_for_condition, aes(x=period, y=as.numeric(norm_accum_activity_count), group=condition)) +
   geom_line(aes(color=condition))+
