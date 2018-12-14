@@ -1,0 +1,312 @@
+---
+title: "consecutive user visualization"
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+library(dplyr)
+```
+```{r}
+source("util.R")
+```
+
+
+
+## task 1 all activities
+```{r}
+## all activity sequences
+sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities_with_start.csv", stringsAsFactors = F) %>% subset(select=-c(X, class)) %>% 
+  addTask() %>% 
+  
+###!!!### filter which task
+  #filter(task == "task3") %>% 
+###!!!### filter type (forum / wiki)
+  #filter(type == "wiki") %>% 
+  filter(!user_id == "start" )
+```
+
+```{r}
+t1 <- sequences %>% 
+  filter(period < 12)
+
+t2 <- sequences
+```
+
+
+```{r}
+# filter sub-sequences to only contain relevant activities (timewise)
+seq_day1 <- sequences %>% 
+  filter(period <= 1)
+seq_day2 <- sequences %>% 
+  filter(period <= 2)
+seq_day3 <- sequences %>% 
+  filter(period <= 3)
+seq_day4 <- sequences %>% 
+  filter(period <= 4)
+seq_day5 <- sequences %>% 
+  filter(period <= 5)
+seq_day6 <- sequences %>% 
+  filter(period <= 6)
+seq_day7 <- sequences %>% 
+  filter(period <= 7)
+seq_day8 <- sequences %>% 
+  filter(period <= 8)
+seq_day9 <- sequences %>% 
+  filter(period <= 9)
+seq_day10 <- sequences %>% 
+  filter(period <= 10)
+seq_day11 <- sequences %>% 
+  filter(period <= 11)
+seq_day12 <- sequences %>% 
+  filter(period <= 12)
+seq_day13 <- sequences %>% 
+  filter(period <= 13)
+seq_day14 <- sequences %>% 
+  filter(period <= 14)
+```
+
+```{r}
+activity_counts_day1 <- calculateUserActivityCount(seq_day1) %>% 
+  addConditions()
+activity_counts_day2 <- calculateUserActivityCount(seq_day2) %>% 
+  addConditions()
+activity_counts_day3 <- calculateUserActivityCount(seq_day3) %>% 
+  addConditions()
+activity_counts_day4 <- calculateUserActivityCount(seq_day4) %>% 
+  addConditions()
+activity_counts_day5 <- calculateUserActivityCount(seq_day5) %>% 
+  addConditions()
+activity_counts_day6 <- calculateUserActivityCount(seq_day6) %>% 
+  addConditions()
+activity_counts_day7 <- calculateUserActivityCount(seq_day7) %>% 
+  addConditions()
+activity_counts_day8 <- calculateUserActivityCount(seq_day8) %>% 
+  addConditions()
+activity_counts_day9 <- calculateUserActivityCount(seq_day9) %>% 
+  addConditions()
+activity_counts_day10 <- calculateUserActivityCount(seq_day10) %>% 
+  addConditions()
+activity_counts_day11 <- calculateUserActivityCount(seq_day11) %>% 
+  addConditions()
+activity_counts_day12 <- calculateUserActivityCount(seq_day12) %>% 
+  addConditions()
+activity_counts_day13 <- calculateUserActivityCount(seq_day13) %>% 
+  addConditions()
+activity_counts_day14 <- calculateUserActivityCount(seq_day14) %>% 
+  addConditions()
+
+# start with day 2 since there were no activities on day one
+changing_activity_count <- activity_counts_day1
+changing_activity_count$period = 1
+
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day2, 2)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day3, 3)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day4, 4)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day5, 5)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day6, 6)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day7, 7)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day8, 8)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day9, 9)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day10, 10)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day11, 11)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day12, 12)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day13, 13)
+changing_activity_count <- addValues(changing_activity_count, activity_counts_day14, 14)
+```
+
+```{r}
+# # # OVERALL ACTIVITY COUNT
+# task1_changing_activity_count <- changing_activity_count
+# write.csv2(task1_changing_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_user_overall_changing_activity_count.csv", row.names = F)
+# 
+# task2_changing_activity_count <- changing_activity_count
+# write.csv2(task2_changing_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_user_overall_changing_activity_count.csv", row.names = F)
+# 
+# task3_changing_activity_count <- changing_activity_count
+# write.csv2(task3_changing_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_user_overall_changing_activity_count.csv", row.names = F)
+
+
+# OVERALL ACTIVITY COUNT
+task1_overall_changing_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_user_overall_changing_activity_count.csv")
+
+task2_overall_changing_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_user_overall_changing_activity_count.csv")
+
+task3_overall_changing_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_user_overall_changing_activity_count.csv")
+
+```
+
+
+
+```{r}
+# adapt periods for task2 and task3
+# task1: period 1  - 14
+# task2: period 15 - 28
+# task3: period 29 - 42
+
+task2_overall_changing_activity_count$period <- task2_overall_changing_activity_count$period + 14
+task3_overall_changing_activity_count$period <- task3_overall_changing_activity_count$period + 28
+```
+
+```{r}
+all_tasks_overall_changing_activity_count <- rbind(task1_overall_changing_activity_count, task2_overall_changing_activity_count, task3_overall_changing_activity_count)
+
+for_users <- all_tasks_overall_changing_activity_count
+```
+
+```{r}
+overall_activity_distribution_for_condition <- all_tasks_overall_changing_activity_count %>% 
+  group_by(period, condition) %>% 
+  #group_by(condition, add = T) %>% 
+  summarise(accum_activity_count = mean(activity_count))
+
+overall_activity_distribution_for_condition$norm_accum_activity_count <- NA
+
+# normalize activity count by dividing accum_activity_count by the number of groups for the condition and task
+
+### Task1: Integrationsmodelle 
+### GruppenIDs: 154 - 174
+# task1: period 1  - 14
+#   Ko: 6
+#   M:  6
+#   MG: 6
+#
+### Task2: Soziale Präsenz
+### GruppenIDs: 187 - 202
+# task2: period 15 - 28
+#   Ko: 6
+#   M:  5
+#   MG: 5
+#   
+### Task3: Brainstorming
+### GruppenIDs: 211 - 224
+# task3: period 29 - 42
+#   Ko: 5
+#   M:  4
+#   MG: 4
+
+# TASK1
+# find indices for task1 entries for each condition
+task1_Ko <- overall_activity_distribution_for_condition$period %in% c(1:14) & overall_activity_distribution_for_condition$condition == "Ko"
+task1_M <- overall_activity_distribution_for_condition$period %in% c(1:14) & overall_activity_distribution_for_condition$condition == "M"
+task1_MG <- overall_activity_distribution_for_condition$period %in% c(1:14) & overall_activity_distribution_for_condition$condition == "MG"
+
+# normalize activity counts by dividing by the number of groups for each condition
+overall_activity_distribution_for_condition$norm_accum_activity_count[task1_Ko] <- overall_activity_distribution_for_condition$accum_activity_count[task1_Ko]/6
+overall_activity_distribution_for_condition$norm_accum_activity_count[task1_M] <- overall_activity_distribution_for_condition$accum_activity_count[task1_M]/6
+overall_activity_distribution_for_condition$norm_accum_activity_count[task1_MG] <- overall_activity_distribution_for_condition$accum_activity_count[task1_MG]/6
+
+
+# TASK2
+# find indices for task2 entries for each condition
+task2_Ko <- overall_activity_distribution_for_condition$period %in% c(15:28) & overall_activity_distribution_for_condition$condition == "Ko"
+task2_M <- overall_activity_distribution_for_condition$period %in% c(15:28) & overall_activity_distribution_for_condition$condition == "M"
+task2_MG <- overall_activity_distribution_for_condition$period %in% c(15:28) & overall_activity_distribution_for_condition$condition == "MG"
+
+# normalize activity counts by dividing by the number of groups for each condition
+overall_activity_distribution_for_condition$norm_accum_activity_count[task2_Ko] <- overall_activity_distribution_for_condition$accum_activity_count[task2_Ko]/6
+overall_activity_distribution_for_condition$norm_accum_activity_count[task2_M] <- overall_activity_distribution_for_condition$accum_activity_count[task2_M]/5
+overall_activity_distribution_for_condition$norm_accum_activity_count[task2_MG] <- overall_activity_distribution_for_condition$accum_activity_count[task2_MG]/5
+
+# TASK3
+# find indices for task3 entries for each condition
+task3_Ko <- overall_activity_distribution_for_condition$period %in% c(29:42) & overall_activity_distribution_for_condition$condition == "Ko"
+task3_M <- overall_activity_distribution_for_condition$period %in% c(29:42) & overall_activity_distribution_for_condition$condition == "M"
+task3_MG <- overall_activity_distribution_for_condition$period %in% c(29:42) & overall_activity_distribution_for_condition$condition == "MG"
+
+# normalize activity counts by dividing by the number of groups for each condition
+overall_activity_distribution_for_condition$norm_accum_activity_count[task3_Ko] <- overall_activity_distribution_for_condition$accum_activity_count[task3_Ko]/5
+overall_activity_distribution_for_condition$norm_accum_activity_count[task3_M] <- overall_activity_distribution_for_condition$accum_activity_count[task3_M]/4
+overall_activity_distribution_for_condition$norm_accum_activity_count[task3_MG] <- overall_activity_distribution_for_condition$accum_activity_count[task3_MG]/4
+```
+
+```{r}
+# adding 0 activity after task end, so that next task begins with 0 activity not with first value for activity count
+
+# periods before:
+# task1: period 1  - 14
+# task2: period 15 - 28
+# task3: period 29 - 42
+
+# adapted periods: 
+# task1:    1  - 14
+# task1end: 15
+# task2:    16 - 29
+# task2end: 30
+# task3:    31 - 44
+
+# shifting period for task2 and task3
+task2_index <- overall_activity_distribution_for_condition$period %in% c(15:28)
+task3_index <- overall_activity_distribution_for_condition$period %in% c(29:42)
+
+overall_activity_distribution_for_condition$period[task2_index] <- overall_activity_distribution_for_condition$period[task2_index]+1
+
+overall_activity_distribution_for_condition$period[task3_index] <- overall_activity_distribution_for_condition$period[task3_index]+2
+
+# adding 0 row between task1-task2 and task2-task3
+
+overall_activity_distribution_for_condition[nrow(overall_activity_distribution_for_condition)+1,] <- c(period = 15, condition = "Ko", accum_activity_count = 0, norm_accum_activity_count = 0)
+overall_activity_distribution_for_condition[nrow(overall_activity_distribution_for_condition)+1,] <- c(period = 15, condition = "M", accum_activity_count = 0, norm_accum_activity_count = 0)
+overall_activity_distribution_for_condition[nrow(overall_activity_distribution_for_condition)+1,] <- c(period = 15, condition = "MG", accum_activity_count = 0, norm_accum_activity_count = 0)
+
+overall_activity_distribution_for_condition[nrow(overall_activity_distribution_for_condition)+1,] <- c(period = 30, condition = "Ko", accum_activity_count = 0, norm_accum_activity_count = 0)
+overall_activity_distribution_for_condition[nrow(overall_activity_distribution_for_condition)+1,] <- c(period = 30, condition = "M", accum_activity_count = 0, norm_accum_activity_count = 0)
+overall_activity_distribution_for_condition[nrow(overall_activity_distribution_for_condition)+1,] <- c(period = 30, condition = "MG", accum_activity_count = 0, norm_accum_activity_count = 0)
+
+overall_activity_distribution_for_condition <- overall_activity_distribution_for_condition %>% 
+  arrange(as.numeric(period))
+
+```
+
+```{r}
+write.csv2(overall_activity_distribution_for_condition, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/overall_user_activitiy_distribution_for_condition.csv", row.names = F)
+
+overall_activity_distribution_for_condition <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/overall_user_activitiy_distribution_for_condition.csv", stringsAsFactors = F)
+
+# forum_activity_distribution_for_condition <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/forum_activitiy_distribution_for_condition.csv", stringsAsFactors = F)
+# 
+# wiki_activity_distribution_for_condition <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/wiki_activitiy_distribution_for_condition.csv", stringsAsFactors = F)
+```
+
+```{r}
+# ggplot(overall_activity_distribution_for_condition, aes(x=period, y=as.numeric(accum_activity_count), group=condition)) +
+#   geom_line(aes(color=condition))+
+#   geom_point(aes(color=condition))
+```
+```{r}
+# ggplot(forum_activity_distribution_for_condition, aes(x=period, y=as.numeric(accum_activity_count), group=condition)) +
+#   geom_line(aes(color=condition))+
+#   geom_point(aes(color=condition))
+```
+
+```{r}
+# ggplot(wiki_activity_distribution_for_condition, aes(x=period, y=as.numeric(accum_activity_count), group=condition)) +
+#   geom_line(aes(color=condition))+
+#   geom_point(aes(color=condition))
+```
+
+
+```{r}
+ggplot(overall_activity_distribution_for_condition, aes(x=period, y=as.numeric(norm_accum_activity_count), group=condition)) +
+  geom_line(aes(color=condition))+
+  geom_point(aes(color=condition))
+```
+```{r}
+ggplot(forum_activity_distribution_for_condition, aes(x=period, y=as.numeric(norm_accum_activity_count), group=condition)) +
+  geom_line(aes(color=condition))+
+  geom_point(aes(color=condition))
+```
+
+```{r}
+ggplot(wiki_activity_distribution_for_condition, aes(x=period, y=as.numeric(norm_accum_activity_count), group=condition)) +
+  geom_line(aes(color=condition))+
+  geom_point(aes(color=condition))
+```
+
+```{r}
+overall_activity_distribution_for_condition <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/overall_activitiy_distribution_for_condition.csv", stringsAsFactors = F)
+
+
+overall_user_activity_distribution_for_condition <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/overall_user_activitiy_distribution_for_condition.csv", stringsAsFactors = F)
+```
+
