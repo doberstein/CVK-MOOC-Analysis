@@ -1,0 +1,422 @@
+---
+title: "activity level analysis"
+output: html_notebook
+---
+
+
+```{r}
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+source("util.R")
+```
+
+analyze activity levels of students
+  for each time period (2 days -> period 1 - 7)
+    calculate number of activities to this point (all previous activities for this task (period <= x))
+    generate ranking of students
+      1 (most active), 2 (medium active), 3 (least active)
+  
+aim: table with students that contains the activity level for each perdiod in one column
+
+then: analyze transitions between levels
+expectation:  levels stay the same for Ko
+              levels increase for M/MG in the end
+              
+### TASK1 ###
+#############
+## all activities for task1
+```{r}
+## all activity sequences
+sequences_task1 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities_with_start.csv", stringsAsFactors = F) %>% subset(select=-c(X, class)) %>% 
+  addTask() %>% 
+  
+###!!!### filter which task
+  filter(task == "task1") %>% 
+###!!!### filter type (forum / wiki)
+  #filter(type == "wiki") %>% 
+  filter(!user_id == "start" )
+```
+
+```{r}
+# filter sub-sequences to only contain relevant activities (timewise)
+# period 1: day 1,2
+# period 2: day 3,4
+# ...
+
+seq_task1_period1 <- sequences_task1 %>% 
+  filter(period <= 2)
+seq_task1_period2 <- sequences_task1 %>% 
+  filter(period <= 4)
+seq_task1_period3 <- sequences_task1 %>% 
+  filter(period <= 6)
+seq_task1_period4 <- sequences_task1 %>% 
+  filter(period <= 8)
+seq_task1_period5 <- sequences_task1 %>% 
+  filter(period <= 10)
+seq_task1_period6 <- sequences_task1 %>% 
+  filter(period <= 12)
+seq_task1_period7 <- sequences_task1 %>% 
+  filter(period <= 14)
+
+```
+
+```{r}
+activity_counts_task1_period1 <- calculateUserActivityCount(seq_task1_period1) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>% 
+  addConditions()
+activity_counts_task1_period2 <- calculateUserActivityCount(seq_task1_period2) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>%
+  addConditions()
+activity_counts_task1_period3 <- calculateUserActivityCount(seq_task1_period3) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>% 
+  addConditions()
+activity_counts_task1_period4 <- calculateUserActivityCount(seq_task1_period4) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>% 
+  addConditions()
+activity_counts_task1_period5 <- calculateUserActivityCount(seq_task1_period5) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>% 
+  addConditions()
+activity_counts_task1_period6 <- calculateUserActivityCount(seq_task1_period6) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>% 
+  addConditions()
+activity_counts_task1_period7 <- calculateUserActivityCount(seq_task1_period7) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>% 
+  addConditions()
+
+# start with day 2 if there were no activities on day one
+task1_changing_user_activity_count <- activity_counts_task1_period1
+task1_changing_user_activity_count$period = 1
+
+task1_changing_user_activity_count <- addValues(task1_changing_user_activity_count, activity_counts_task1_period2, 2)
+task1_changing_user_activity_count <- addValues(task1_changing_user_activity_count, activity_counts_task1_period3, 3)
+task1_changing_user_activity_count <- addValues(task1_changing_user_activity_count, activity_counts_task1_period4, 4)
+task1_changing_user_activity_count <- addValues(task1_changing_user_activity_count, activity_counts_task1_period5, 5)
+task1_changing_user_activity_count <- addValues(task1_changing_user_activity_count, activity_counts_task1_period6, 6)
+task1_changing_user_activity_count <- addValues(task1_changing_user_activity_count, activity_counts_task1_period7, 7)
+
+
+# replace NaN values
+task1_changing_user_activity_count$norm_rank[is.nan(task1_changing_user_activity_count$norm_rank)] <- 0
+
+```
+
+```{r}
+#task1_changing_user_activity_count <- task1_changing_user_activity_count
+# write.csv2(task1_changing_user_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_per_1_7_changing_activity_count.csv", row.names = F)
+```
+
+### TASK2 ###
+#############
+## all activities for task1
+```{r}
+## all activity sequences
+sequences_task2 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities_with_start.csv", stringsAsFactors = F) %>% subset(select=-c(X, class)) %>% 
+  addTask() %>% 
+  
+###!!!### filter which task
+  filter(task == "task2") %>% 
+###!!!### filter type (forum / wiki)
+  #filter(type == "wiki") %>% 
+  filter(!user_id == "start" )
+```
+
+```{r}
+# filter sub-sequences to only contain relevant activities (timewise)
+# period 1: day 1,2
+# period 2: day 3,4
+# ...
+
+seq_task2_period1 <- sequences_task2 %>% 
+  filter(period <= 2)
+seq_task2_period2 <- sequences_task2 %>% 
+  filter(period <= 4)
+seq_task2_period3 <- sequences_task2 %>% 
+  filter(period <= 6)
+seq_task2_period4 <- sequences_task2 %>% 
+  filter(period <= 8)
+seq_task2_period5 <- sequences_task2 %>% 
+  filter(period <= 10)
+seq_task2_period6 <- sequences_task2 %>% 
+  filter(period <= 12)
+seq_task2_period7 <- sequences_task2 %>% 
+  filter(period <= 14)
+
+```
+
+```{r}
+activity_counts_task2_period1 <- calculateUserActivityCount(seq_task2_period1) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>% 
+  addConditions()
+activity_counts_task2_period2 <- calculateUserActivityCount(seq_task2_period2) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>% 
+  addConditions()
+activity_counts_task2_period3 <- calculateUserActivityCount(seq_task2_period3) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>%
+  addConditions()
+activity_counts_task2_period4 <- calculateUserActivityCount(seq_task2_period4) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>%
+  addConditions()
+activity_counts_task2_period5 <- calculateUserActivityCount(seq_task2_period5) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>%
+  addConditions()
+activity_counts_task2_period6 <- calculateUserActivityCount(seq_task2_period6) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>%
+  addConditions()
+activity_counts_task2_period7 <- calculateUserActivityCount(seq_task2_period7) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>%
+  addConditions()
+
+# start with day 2 if there were no activities on day one
+task2_changing_user_activity_count <- activity_counts_task2_period1
+task2_changing_user_activity_count$period = 1
+
+task2_changing_user_activity_count <- addValues(task2_changing_user_activity_count, activity_counts_task2_period2, 2)
+task2_changing_user_activity_count <- addValues(task2_changing_user_activity_count, activity_counts_task2_period3, 3)
+task2_changing_user_activity_count <- addValues(task2_changing_user_activity_count, activity_counts_task2_period4, 4)
+task2_changing_user_activity_count <- addValues(task2_changing_user_activity_count, activity_counts_task2_period5, 5)
+task2_changing_user_activity_count <- addValues(task2_changing_user_activity_count, activity_counts_task2_period6, 6)
+task2_changing_user_activity_count <- addValues(task2_changing_user_activity_count, activity_counts_task2_period7, 7)
+
+# replace NaN values
+task2_changing_user_activity_count$norm_rank[is.nan(task2_changing_user_activity_count$norm_rank)] <- 0
+
+```
+
+```{r}
+# task2_changing_user_activity_count <- task2_changing_user_activity_count
+# write.csv2(task2_changing_user_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_per_1_7_changing_activity_count.csv", row.names = F)
+```
+
+### TASK3 ###
+#############
+## all activities for task1
+```{r}
+## all activity sequences
+sequences_task3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities_with_start.csv", stringsAsFactors = F) %>% subset(select=-c(X, class)) %>% 
+  addTask() %>% 
+  
+###!!!### filter which task
+  filter(task == "task3") %>% 
+###!!!### filter type (forum / wiki)
+  #filter(type == "wiki") %>% 
+  filter(!user_id == "start" )
+```
+
+```{r}
+# filter sub-sequences to only contain relevant activities (timewise)
+# period 1: day 1,2
+# period 2: day 3,4
+# ...
+
+seq_task3_period1 <- sequences_task3 %>% 
+  filter(period <= 2)
+seq_task3_period2 <- sequences_task3 %>% 
+  filter(period <= 4)
+seq_task3_period3 <- sequences_task3 %>% 
+  filter(period <= 6)
+seq_task3_period4 <- sequences_task3 %>% 
+  filter(period <= 8)
+seq_task3_period5 <- sequences_task3 %>% 
+  filter(period <= 10)
+seq_task3_period6 <- sequences_task3 %>% 
+  filter(period <= 12)
+seq_task3_period7 <- sequences_task3 %>% 
+  filter(period <= 14)
+
+```
+
+```{r}
+activity_counts_task3_period1 <- calculateUserActivityCount(seq_task3_period1) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>%
+  addConditions()
+activity_counts_task3_period2 <- calculateUserActivityCount(seq_task3_period2) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>%
+  addConditions()
+activity_counts_task3_period3 <- calculateUserActivityCount(seq_task3_period3) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>%
+  addConditions()
+activity_counts_task3_period4 <- calculateUserActivityCount(seq_task3_period4) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>%
+  addConditions()
+activity_counts_task3_period5 <- calculateUserActivityCount(seq_task3_period5) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>%
+  addConditions()
+activity_counts_task3_period6 <- calculateUserActivityCount(seq_task3_period6) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>%
+  addConditions()
+activity_counts_task3_period7 <- calculateUserActivityCount(seq_task3_period7) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>%
+  addConditions()
+
+# start with day 2 if there were no activities on day one
+task3_changing_user_activity_count <- activity_counts_task3_period1
+task3_changing_user_activity_count$period = 1
+
+task3_changing_user_activity_count <- addValues(task3_changing_user_activity_count, activity_counts_task3_period2, 2)
+task3_changing_user_activity_count <- addValues(task3_changing_user_activity_count, activity_counts_task3_period3, 3)
+task3_changing_user_activity_count <- addValues(task3_changing_user_activity_count, activity_counts_task3_period4, 4)
+task3_changing_user_activity_count <- addValues(task3_changing_user_activity_count, activity_counts_task3_period5, 5)
+task3_changing_user_activity_count <- addValues(task3_changing_user_activity_count, activity_counts_task3_period6, 6)
+task3_changing_user_activity_count <- addValues(task3_changing_user_activity_count, activity_counts_task3_period7, 7)
+
+# replace NaN values
+task3_changing_user_activity_count$norm_rank[is.nan(task3_changing_user_activity_count$norm_rank)] <- 0
+
+```
+
+```{r}
+# task3_changing_user_activity_count <- task3_changing_user_activity_count
+# write.csv2(task3_changing_user_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_per_1_7_changing_activity_count.csv", row.names = F)
+```
+
+
+
+### READ PREPARED DATA ###
+```{r}
+task1_changing_user_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_per_1_7_changing_activity_count.csv") %>% 
+  arrange(activity_count)
+
+task2_changing_user_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_per_1_7_changing_activity_count.csv") %>% 
+  arrange(activity_count)
+
+task3_changing_user_activity_count <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_per_1_7_changing_activity_count.csv") %>% 
+  arrange(activity_count)
+```
+
+```{r}
+View(task1_changing_user_activity_count)
+View(t1_test)
+View(activity_counts_task3_period7)
+```
+
+
+### for overall ranks (not normalized)
+### compare each period to the previous period
+### add variable which states changes in the ranking
+
+```{r}
+# Task1
+t1_test <- task1_changing_user_activity_count %>% 
+  group_by(user_id) %>% 
+  arrange(period, .by_group = T) %>% 
+  mutate(ranking_change = -(rank -lag(rank)))
+
+t1_test_2 <- t1_test %>% 
+  filter(!is.na(ranking_change)) %>% 
+  filter(!ranking_change == 0) %>% 
+  group_by(condition) %>% 
+  summarise(average_rank_change1 = mean(ranking_change))
+  #summarise(accum_rank_change = sum(ranking_change))
+
+# Task2
+t2_test <- task2_changing_user_activity_count %>% 
+  group_by(user_id) %>% 
+  arrange(period, .by_group = T) %>% 
+  mutate(ranking_change = -(rank -lag(rank)))
+
+t2_test_2 <- t2_test %>% 
+  filter(!is.na(ranking_change)) %>% 
+  filter(!ranking_change == 0) %>% 
+  group_by(condition) %>% 
+  summarise(average_rank_change2 = mean(ranking_change))
+
+# Task3
+t3_test <- task3_changing_user_activity_count %>% 
+  group_by(user_id) %>% 
+  arrange(period, .by_group = T) %>% 
+  mutate(ranking_change = -(rank -lag(rank)))
+
+t3_test_2 <- t3_test %>% 
+  filter(!is.na(ranking_change)) %>% 
+  #filter(!ranking_change == 0) %>% 
+  group_by(condition) %>% 
+  summarise(average_rank_change3 = mean(ranking_change))
+
+change_merge <- merge(t1_test_2, t2_test_2) %>% 
+  merge(t3_test_2)
+```
+
+### for normalized ranks 
+### compare each period to the previous period
+### add variable which states changes in the ranking
+# 0: best rank
+# 1: worst rank
+# -> for change: the lower the better 
+
+```{r}
+
+# task 1
+t1_norm_test <- task1_changing_user_activity_count %>% 
+  group_by(user_id) %>% 
+  arrange(period, .by_group = T) %>% 
+  mutate(ranking_change = (norm_rank -lag(norm_rank)))
+
+t1_norm_test_2 <- t1_norm_test %>% 
+  filter(!is.na(ranking_change)) %>% 
+  #filter(!ranking_change == 0) %>% 
+  group_by(condition) %>% 
+  summarise(average_rank_change1 = mean(ranking_change))
+  #summarise(accum_rank_change = sum(ranking_change))
+
+# task 2 
+t2_norm_test <- task2_changing_user_activity_count %>% 
+  group_by(user_id) %>% 
+  arrange(period, .by_group = T) %>% 
+  mutate(ranking_change = (norm_rank -lag(norm_rank)))
+
+t2_norm_test_2 <- t2_norm_test %>% 
+  filter(!is.na(ranking_change)) %>% 
+  #filter(!ranking_change == 0) %>% 
+  group_by(condition) %>% 
+  summarise(average_rank_change2 = mean(ranking_change))
+  #summarise(accum_rank_change = sum(ranking_change))
+
+# task 3
+
+t3_norm_test <- task3_changing_user_activity_count %>% 
+  group_by(user_id) %>% 
+  arrange(period, .by_group = T) %>% 
+  mutate(ranking_change = (norm_rank -lag(norm_rank)))
+
+t3_norm_test_2 <- t3_norm_test %>% 
+  filter(!is.na(ranking_change)) %>% 
+  #filter(!ranking_change == 0) %>% 
+  group_by(condition) %>% 
+  summarise(average_rank_change3 = mean(ranking_change))
+  #summarise(accum_rank_change = sum(ranking_change))
+
+norm_change_merge <- merge(t1_norm_test_2, t2_norm_test_2) %>% 
+  merge(t3_norm_test_2)
+```
+
+
+
+
+
+
+
+
