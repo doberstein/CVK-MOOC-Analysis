@@ -1,0 +1,140 @@
+---
+title: "Task 4 Analysis"
+output: html_notebook
+---
+
+```{r}
+source("setup.R")
+source("util.R")
+```
+
+
+###TODO for new task:
+####read new files
+####adjust condition information
+####adjust start date (task_begin <- as.Date(...))
+
+
+### READ DATA, GENERATE DATASET
+```{r}
+### ONCE ###
+# complete final models with content for each condition
+data_NA <- fromJSON("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/Task 4/Task4_Common_Ground_NA_content.txt")
+data_WA <- fromJSON("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/Task 4/Task4_Common_Ground_WA_content.txt")
+
+
+### SEQUENCES ###
+# unnest sequences from lists to data.frame
+sequences_NA <- data_NA$group_sequences %>%
+  unnest()
+sequences_WA <- data_WA$group_sequences %>%
+  unnest()
+
+
+# combine all files to a single table
+sequences <- bind_rows(list(sequences_NA, sequences_WA))
+
+write.csv2(sequences, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task4_activities.csv")
+
+
+# extract groups and users
+users_groups_NA <- data_NA$model_metadata$groups %>%
+  unnest()
+users_groups_WA <- data_WA$model_metadata$groups %>%
+  unnest()
+
+
+# combine all files to a single table
+groups_and_users <- bind_rows(list(users_groups_NA, users_groups_WA)) %>%
+  subset(select = c("group_id", "name"))
+names(groups_and_users)[names(groups_and_users) == 'name'] <- 'user_id'
+
+groups_and_users <- addConditions(groups_and_users)
+
+
+write.csv2(groups_and_users, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task4_groups_and_users.csv")
+```
+
+### DATA PREPROCESSING: WIKI WORDCOUNT CALCULATION
+```{r}
+## ONCE ###
+sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task4_activities.csv", stringsAsFactors = F) %>%
+  subset(select=-X) %>%
+  rowwise() %>%
+  mutate(content = gsub("\n", " ", content)) %>%  # delete newlines
+  mutate(wordcount = wordcount(content))  # calculate wordcount
+
+### FORUM DATA ###
+forum_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/replied")
+
+### WIKI DATA ###
+
+wiki_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/updated") %>%
+  group_by(group_id) %>%
+  arrange(timestamp, .by_group = T) %>%
+  mutate(textchange = wordcount - lag(wordcount)) # calculate textchange as difference between current and last revision
+
+# correct value for first revisions (since textchange for first posts are "NA")
+firstRevisions <- is.na(wiki_data$textchange)
+wiki_data$textchange[firstRevisions] <- wiki_data$wordcount[firstRevisions]
+
+# correct value for revisions that are shorter than the last on (change negative numbers to 0)
+negativeWordcounts <- wiki_data$textchange < 0
+length(which(negativeWordcounts[negativeWordcounts==TRUE]))
+wiki_data$textchange[negativeWordcounts] <- 0
+
+# replace 'wordcount' with 'textchange'
+wiki_data <- wiki_data %>%
+  subset(select = - wordcount)
+
+names(wiki_data)[names(wiki_data) == 'textchange'] <- 'wordcount'
+
+### Analyze together ###
+sequences2 <- bind_rows(list(forum_data, wiki_data)) %>%
+  group_by(group_id) %>%
+  arrange(timestamp, .by_group = T)
+
+write.csv2(sequences2, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task4_activities.csv")
+
+### find largest deletes: wiki post with highest negative wordcount ###
+# wiki_data2 <- wiki_data2 %>%
+#   arrange(textchange)
+#
+# ind <- which(wiki_data2$textchange == -460)
+# rows <- lapply(ind, function(wiki_data2) (wiki_data2-5):(wiki_data2+5))
+# # With unlist() you get all relevant rows
+# d1 <- wiki_data2[unlist(rows),]
+```
+
+### READ PREPROCESSED DATASET; ADD EXPERIMANTAL CONDITIONS TO GROUPS; ADD DATE TO ACTIVITIES
+
+```{r}
+### READ DATA ###
+sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task4_activities.csv", stringsAsFactors = F) %>% 
+  subset(select=-X) %>% 
+  addConditions()
+
+
+
+### adding dates as days
+### adding period (first day = 1; last day = 14)
+### adding type (forum, wiki)
+
+task_begin <- as.Date("2018-10-15")
+
+sequences <- sequences %>% 
+  mutate(day = anydate(timestamp)) %>% 
+  mutate(period = as.numeric(anydate(timestamp) - task_begin)+1) %>% 
+  mutate(type = ifelse(object_type == "http://id.tincanapi.com/activitytype/forum-topic", "forum", "wiki"))
+  
+
+write.csv2(sequences, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_activities_2.csv")
+
+### FORUM DATA ###
+forum_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/replied")
+
+### WIKI DATA ###
+
+wiki_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/updated")
+```
+
