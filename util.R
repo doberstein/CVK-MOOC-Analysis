@@ -19,6 +19,10 @@ addConditions <- function(df) {
     df$condition[df$group_id %in% c(211:215)] <- "Ko"
     df$condition[df$group_id %in% c(216:219)] <- "M"
     df$condition[df$group_id %in% c(221:224)] <- "MG"
+    
+    # Task4
+    df$condition[df$group_id %in% c(230:235)] <- "NA"
+    df$condition[df$group_id %in% c(237:242)] <- "WA"
   }
   
   df
@@ -158,6 +162,19 @@ addActivityRank2 <- function(df) {
   }
    
   #browser()
+  
+  df
+}
+
+
+# normalize a rank to range betwee 0 (best) and 1 (worst)
+# The general one-line formula to linearly rescale data values having observed min and max into a new arbitrary range min' to max' is
+# newvalue= (max'-min')/(max-min)*(value-max)+max'
+#   or
+# newvalue= (max'-min')/(max-min)*(value-min)+min'.
+normalizeRank <- function (df) {
+  df <- df %>%
+    mutate( norm_rank =  round(    (1-0) / (max(df$rank) - min(df$rank)) * (rank - max(df$rank)) + 1  , digits = 2 )    )
   
   df
 }
