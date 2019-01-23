@@ -2,7 +2,7 @@
 title: "CSV generation"
 output: html_notebook
 ---
-
+# Task1 - Task3
 ```{r}
 groups_and_users_task1 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_groups_and_users.csv", stringsAsFactors = F) %>%
   subset(select = -X)
@@ -39,7 +39,41 @@ unique(t1$user_id)
 length(t1)
 ```
 
-```{r}
 
+
+# Task4 - Task6
+```{r}
+groups_and_users_task4 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task4_groups_and_users.csv", stringsAsFactors = F) %>%
+  subset(select = -X)
+
+groups_and_users_task5 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task5_groups_and_users.csv", stringsAsFactors = F) %>%
+  subset(select = -X)
+
+groups_and_users_task6 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task6_groups_and_users.csv", stringsAsFactors = F) %>%
+  subset(select = -X)
+
+all_groups_and_users <- bind_rows(groups_and_users_task4, groups_and_users_task5, groups_and_users_task6) %>%
+  filter(!condition == "KR")
+
+write.csv2(all_groups_and_users, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/all_groups_and_users_task4_6.csv", row.names = F)
+
+all_groups_and_users <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/all_groups_and_users_task4_6.csv", stringsAsFactors = F)
 ```
+
+# all activities for task4-6
+```{r}
+t4_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task4_activities_2.csv", stringsAsFactors = F) %>%
+  subset(select=-X)
+
+t5_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task5_activities_2.csv", stringsAsFactors = F) %>%
+  subset(select=-X)
+
+t6_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task6_activities_2.csv", stringsAsFactors = F) %>%
+  subset(select=-X)
+
+all_sequences <- bind_rows(t4_sequences, t5_sequences, t6_sequences)
+
+write.csv2(all_sequences, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t4_t5_t6_activities.csv")
+```
+
 
