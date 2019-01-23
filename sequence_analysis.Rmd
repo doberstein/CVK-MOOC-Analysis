@@ -8,6 +8,8 @@ library(dplyr)
 library(dmm)
 library(TraMineR)
 library(fpc)
+library(ngram)
+library(anytime)
 ```
 
 ```{r}
@@ -31,11 +33,18 @@ source("util.R")
 # 
 # write.csv2(all_sequences, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities.csv")
 
-
+### TASK 1 - 3
+##############
 # old sequences without start element
-all_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities.csv", stringsAsFactors = F) %>%
-  subset(select=-X) %>%
-  filter(condition %in% c("Ko","M","MG"))
+# all_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities.csv", stringsAsFactors = F) %>%
+#   subset(select=-X) %>%
+#   filter(condition %in% c("Ko","M","MG"))
+
+### TASK 4 - 6
+##############
+# old sequences without start element
+all_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t4_t5_t6_activities.csv", stringsAsFactors = F) %>%
+  subset(select=-X) 
 ```
 
 ## CLASSIFICATION
@@ -73,7 +82,8 @@ all_sequences$class[all_sequences$type == "forum"] <- "communication"
 ```
 
 
-## ADD START ELEMENt (TASK BEGIN) TO EACH SEQUENCE 
+## ADD START ELEMENT (TASK BEGIN) TO EACH SEQUENCE 
+## TASK 1 - 3
 ```{r}
 
 # (real) time in forum: Montag, 26. November 2018, 15:37
@@ -177,8 +187,235 @@ all_sequences$class[all_sequences$type == "forum"] <- "communication"
 # 
 # write.csv2(all_sequences_with_start, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities_with_start.csv")
 
-all_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities_with_start.csv", stringsAsFactors = F) %>% subset(select=-X)
+all_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities_with_start.csv", stringsAsFactors = F) %>% subset(select=-X) %>% 
+  filter(!(group_id == 155))
   
+
+
+```
+
+
+
+
+## ADD START ELEMENT (TASK BEGIN) TO EACH SEQUENCE 
+## TASK 4 - 6
+
+
+```{r}
+
+# (real) time in forum: Montag, 26. November 2018, 15:37
+# timestamp in activity sequence: 1543243054 = Montag, 26. November 2018, 14:37
+# -> timestamp has to be real-time - 3600
+
+## TIME INFO:
+# !!! Zeitumstellung 28.10.2018 !!!
+
+# t1_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_activities_2.csv")
+# t2_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_activities_2.csv")
+# t3_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_activities_2.csv")
+t4_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task4_activities_2.csv")
+t5_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task5_activities_2.csv")
+t6_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task6_activities_2.csv")
+
+# min(t1_sequences$timestamp)
+# max(t1_sequences$timestamp)
+# 
+# min(t2_sequences$timestamp)
+# max(t2_sequences$timestamp)
+# 
+# min(t3_sequences$timestamp)
+# max(t3_sequences$timestamp)
+# 
+# min(t4_sequences$timestamp)
+# max(t4_sequences$timestamp)
+# 
+# min(t5_sequences$timestamp)
+# max(t5_sequences$timestamp)
+# 
+# min(t6_sequences$timestamp)
+# max(t6_sequences$timestamp)
+
+# link for converter: 
+# http://www.vk2zay.net/calculators/epochTimeConverter.php
+# Task 1
+# UTC+2 (Sommerzeit)
+# task_start:   1539597600    (15.10.18 12:00 CEST)
+# fist activity 1539637346
+# last activity 1540767541
+# task_end:     1540767600    (28.10.18 24:00 CEST)
+
+# UTC+1 (Winterzeit)
+# Task 2
+# task_start:   1540810800    (29.10.18 12:00 CEST)
+#               1540818619
+#               1541977070
+# task_end:     1541977200    (11.11.18 24:00 CEST)
+
+# Task 3
+# task_start:   1542020400    (12.11.18 12:00 CEST)
+#               1542024953
+#               1543186567
+# task_end:     1543186800    (25.11.18 24:00 CEST)
+
+
+# UTC+1 (Winterzeit)
+# Task 4
+# task_start:   1542366000    (16.11.18 12:00 CEST)
+#               1543234405
+#               1544395887
+# task_end:     1544396400    (09.12.18 24:00 CEST)
+
+      
+# Task 5
+# task_start:   1544439600    (10.12.18 12:00 CEST)
+#               1544445844
+#               1545605936
+# task_end:     1545606000    (23.12.18 24:00 CEST)
+
+# Task 6
+# task_start:   1546858800    (07.01.19 12:00 CEST)
+#               1546889964
+#               1548025051
+# task_end:     1548025200    (20.01.19 24:00 CEST)
+
+# anytime(task6_end+1)
+
+
+### HERE ###
+### HERE ###
+
+# start + end timestamps
+task1_start <- 1539597600
+task1_end <- 1540767600
+
+task2_start <- 1540810800
+task2_end <- 1541977200
+
+task3_start <- 1542020400
+task3_end <- 1543186800
+
+# start + end timestamps
+task4_start <- 1542366000
+task4_end <- 1544396400
+
+task5_start <- 1544439600
+task5_end <- 1545606000
+
+task6_start <- 1546858800
+task6_end <- 1548025200
+
+#anytime(task4_start)
+
+first_activity <- all_sequences[1,]
+col_names <- names(first_activity)
+
+
+# complete start element for each task
+general_start_activity <- data.frame(as.list(c(group_id=1, content="start", object_id="start", object_name="start", object_type="start", timestamp=0, user_id="start", verb_id="start", wordcount=0, condition="test", day="1970-01-01", period=1, type="start", class="start")))
+names(general_start_activity) <- col_names
+
+task1_start_activity <- data.frame(as.list(c(group_id=1, content="start", object_id="start", object_name="start", object_type="start", timestamp=task1_start, user_id="start", verb_id="start", wordcount=0, condition="test", day="2018-10-15", period=1, type="start", class="start")))
+names(task1_start_activity) <- col_names
+
+task2_start_activity <- data.frame(as.list(c(1, "start", "start", "start", "start", task2_start, "start", "start", 0, "test", "2018-10-29", 1, "start", "start")))
+names(task2_start_activity) <- col_names
+
+task3_start_activity <- data.frame(as.list(c(1, "start", "start", "start", "start", task3_start, "start", "start", 0, "test", "2018-11-12", 1, "start", "start")))
+names(task3_start_activity) <- col_names
+
+#***
+
+task4_start_activity <- data.frame(as.list(c(group_id=1, content="start", object_id="start", object_name="start", object_type="start", timestamp=task4_start, user_id="start", verb_id="start", wordcount=0, condition="test", day="2018-11-16", period=1, type="start", class="start")))
+names(task4_start_activity) <- col_names
+
+task5_start_activity <- data.frame(as.list(c(1, "start", "start", "start", "start", task5_start, "start", "start", 0, "test", "2018-12-10", 1, "start", "start")))
+names(task5_start_activity) <- col_names
+
+task6_start_activity <- data.frame(as.list(c(1, "start", "start", "start", "start", task6_start, "start", "start", 0, "test", "2019-01-07", 1, "start", "start")))
+names(task6_start_activity) <- col_names
+
+
+all_sequences_with_start <- data.frame()
+
+addStartElement <- function(df) {
+
+  first_row <- df[1,]
+  sequence <- rbind(first_row, df)
+
+  sequence[1,]$content <- "start"
+  sequence[1,]$object_id <- "start"
+  sequence[1,]$object_name <- "start"
+  sequence[1,]$object_type <- "start"
+  sequence[1,]$user_id <- "start"
+  sequence[1,]$verb_id <- "start"
+  sequence[1,]$wordcount <- 0
+  sequence[1,]$condition <- df[1,]$condition
+  sequence[1,]$type <- "start"
+  sequence[1,]$class <- "start"
+
+  # task 1:
+  if(df[1,]$group_id %in% c(154:174)) {
+    sequence[1,]$timestamp <- as.numeric(as.character(task1_start_activity$timestamp))
+    sequence[1,]$day <- as.character(task1_start_activity$day)
+    sequence[1,]$period <- task1_start_activity$period
+    #browser()
+  }
+
+  # task 2:
+  if(df[1,]$group_id %in% c(187:202)) {
+    sequence[1,]$timestamp <- as.numeric(as.character(task2_start_activity$timestamp))
+    sequence[1,]$day <- as.character(task2_start_activity$day)
+    sequence[1,]$period <- task2_start_activity$period
+    #browser()
+  }
+
+  # task 3:
+  if(df[1,]$group_id %in% c(211:224)) {
+    #browser()
+    sequence[1,]$timestamp <- as.numeric(as.character(task3_start_activity$timestamp))
+    sequence[1,]$day <- as.character(task3_start_activity$day)
+    sequence[1,]$period <- task3_start_activity$period
+  }
+  
+  # task 4:
+  if(df[1,]$group_id %in% c(230:242)) {
+    sequence[1,]$timestamp <- as.numeric(as.character(task4_start_activity$timestamp))
+    sequence[1,]$day <- as.character(task4_start_activity$day)
+    sequence[1,]$period <- task4_start_activity$period
+    #browser()
+  }
+
+  # task 5:
+  if(df[1,]$group_id %in% c(247:259)) {
+    sequence[1,]$timestamp <- as.numeric(as.character(task5_start_activity$timestamp))
+    sequence[1,]$day <- as.character(task5_start_activity$day)
+    sequence[1,]$period <- task5_start_activity$period
+    #browser()
+  }
+
+  # task 6:
+  if(df[1,]$group_id %in% c(265:277)) {
+    #browser()
+    sequence[1,]$timestamp <- as.numeric(as.character(task6_start_activity$timestamp))
+    sequence[1,]$day <- as.character(task6_start_activity$day)
+    sequence[1,]$period <- task6_start_activity$period
+  }
+
+  all_sequences_with_start <<- rbind(all_sequences_with_start, sequence)
+
+}
+
+all_sequences %>%
+  group_by(group_id) %>%
+  do(addStartElement(.))
+
+write.csv2(all_sequences_with_start, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t4_t5_t6_activities_with_start.csv")
+
+all_sequences_t1_t2_t3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities_with_start.csv", stringsAsFactors = F) %>% subset(select=-X) %>% 
+  filter(!(group_id == 155))
+  
+all_sequences_t4_t5_t6 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t4_t5_t6_activities_with_start.csv", stringsAsFactors = F) %>% subset(select=-X) %>% 
+  filter(!(group_id == 155))
 
 
 ```
@@ -191,14 +428,13 @@ named_sequences <- c()
 
 
 generateSequence <- function(df) {
+  
 
   gapTime <- 86400
   
-  #browser()
   sequence <- c()
     lastAction <- df[1,]$timestamp
     sapply(1:nrow(df), function(i) {
-      #browser()
       
       # calculate current gap
       gap <- df[i,]$timestamp - lastAction
@@ -210,14 +446,11 @@ generateSequence <- function(df) {
       }
       
       # always add next event to sequence
-      #browser()
       sequence <<- append(sequence, as.character(df[i,]$class))
     })
     
     sequence <- paste(sequence, collapse = "-")
     named_sequences <<- c(named_sequences, sequence)
-    print(sequence)
-    #browser()
     
     d <- data.frame() # to avoid error: "Error: Results 1, 2, 3, 4, 5, ... must be data frames, not character"
     
@@ -231,6 +464,63 @@ all_sequences %>%
 
 
 ```
+```{r}
+groups_and_sequences <- data_frame(group_id = unique(all_sequences$group_id), membership_manual, named_sequences)
+
+# groups_and_sequences[4,]$group_id
+# groups_and_sequences[4,]$membership_manual
+# groups_and_sequences[4,]$named_sequences
+
+```
+
+```{r}
+# final wordcount in wiki articles
+
+all_wiki_wordcounts <- all_sequences %>%
+  filter(type == "wiki") %>% 
+  group_by(group_id) %>% 
+  slice(c(n())) %>%
+  ungroup() %>% 
+  dplyr::rowwise() %>% 
+  mutate(wordcount = wordcount(content))
+```
+
+```{r}
+# dataset with memberships and final wiki wordcounts
+
+wordcounts_memberships <- merge(x = groups_and_sequences, y = all_wiki_wordcounts, by = "group_id") %>% 
+  subset(select = c(group_id, membership_manual, content, named_sequences, wordcount, condition, day, period))
+
+```
+
+```{r}
+# # find groups without wiki contribution -> 155
+# 
+# all_groups <- unique(all_sequences$group_id)
+# 
+# wiki_groups <- all_sequences %>% 
+#   filter(type == "wiki")
+# wiki_groups <- unique(wiki_groups$group_id)
+# 
+# setdiff(all_groups, wiki_groups)
+```
+```{r}
+
+# average wordcount by condition
+average_wordcount_by_condition <- wordcounts_memberships %>% 
+  group_by(condition) %>% 
+  summarise(mean_wordccount = mean(wordcount), sd_wordcount = sd(wordcount))
+
+# average wordcount by cluster
+average_wordcount_by_cluster <- wordcounts_memberships %>% 
+  group_by(membership_manual) %>% 
+  summarise(mean_wordccount = mean(wordcount), sd_wordcount = sd(wordcount))
+
+```
+
+
+
+
 
 ```{r}
 relevant_actions <- c("start", "communication", "major contribution", "minor contribution")
@@ -245,7 +535,7 @@ submat[paste(relevant_actions, "->", sep=""), "gap->"] <- 2
 distances <<- seqdist(sequences, method = "OM", sm=submat)
 distances_manual <<- distances
 
-numClusters <- 2
+numClusters <- 3
 clustersPamk <- pamk(distances, krange = numClusters, diss = TRUE, usepam = T)$pamobject$clustering
 membership_manual <<- clustersPamk
 
