@@ -117,7 +117,7 @@ task1_changing_user_activity_count$norm_rank[is.nan(task1_changing_user_activity
 
 ### TASK2 ###
 #############
-## all activities for task1
+## all activities for task2
 ```{r}
 ## all activity sequences
 sequences_task2 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities_with_start.csv", stringsAsFactors = F) %>% subset(select=-c(X, class)) %>% 
@@ -206,7 +206,7 @@ task2_changing_user_activity_count$norm_rank[is.nan(task2_changing_user_activity
 
 ### TASK3 ###
 #############
-## all activities for task1
+## all activities for task3
 ```{r}
 ## all activity sequences
 sequences_task3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities_with_start.csv", stringsAsFactors = F) %>% subset(select=-c(X, class)) %>% 
@@ -413,6 +413,62 @@ norm_change_merge <- merge(t1_norm_test_2, t2_norm_test_2) %>%
   merge(t3_norm_test_2)
 ```
 
+### ranks for last two periods
+### for normalized ranks 
+### compare each period to the previous period
+### add variable which states changes in the ranking
+# 0: best rank
+# 1: worst rank
+# -> for change: the lower the better 
+
+```{r}
+
+# task 1
+t1_norm_test_end <- task1_changing_user_activity_count %>% 
+  filter(period >= 6) %>% 
+  group_by(user_id) %>% 
+  arrange(period, .by_group = T) %>% 
+  mutate(ranking_change = (norm_rank -lag(norm_rank)))
+
+t1_norm_test_2_end <- t1_norm_test_end %>% 
+  filter(!is.na(ranking_change)) %>% 
+  #filter(!ranking_change == 0) %>% 
+  group_by(condition) %>% 
+  summarise(average_rank_change1 = mean(ranking_change))
+  #summarise(accum_rank_change = sum(ranking_change))
+
+# task 2 
+t2_norm_test_end <- task2_changing_user_activity_count %>% 
+  filter(period >= 6) %>% 
+  group_by(user_id) %>% 
+  arrange(period, .by_group = T) %>% 
+  mutate(ranking_change = (norm_rank -lag(norm_rank)))
+
+t2_norm_test_2_end <- t2_norm_test_end %>% 
+  filter(!is.na(ranking_change)) %>% 
+  #filter(!ranking_change == 0) %>% 
+  group_by(condition) %>% 
+  summarise(average_rank_change2 = mean(ranking_change))
+  #summarise(accum_rank_change = sum(ranking_change))
+
+# task 3
+
+t3_norm_test_end <- task3_changing_user_activity_count %>%
+  filter(period >= 6) %>% 
+  group_by(user_id) %>% 
+  arrange(period, .by_group = T) %>% 
+  mutate(ranking_change = (norm_rank -lag(norm_rank)))
+
+t3_norm_test_2_end <- t3_norm_test_end %>% 
+  filter(!is.na(ranking_change)) %>% 
+  #filter(!ranking_change == 0) %>% 
+  group_by(condition) %>% 
+  summarise(average_rank_change3 = mean(ranking_change))
+  #summarise(accum_rank_change = sum(ranking_change))
+
+norm_change_merge_end <- merge(t1_norm_test_2_end, t2_norm_test_2_end) %>% 
+  merge(t3_norm_test_2_end)
+```
 
 
 
