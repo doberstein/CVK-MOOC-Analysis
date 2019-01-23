@@ -21,8 +21,16 @@ addConditions <- function(df) {
     df$condition[df$group_id %in% c(221:224)] <- "MG"
     
     # Task4
-    df$condition[df$group_id %in% c(230:235)] <- "NA"
-    df$condition[df$group_id %in% c(237:242)] <- "WA"
+    df$condition[df$group_id %in% c(230:235)] <- "N_A"
+    df$condition[df$group_id %in% c(237:242)] <- "W_A"
+    
+    # Task5
+    df$condition[df$group_id %in% c(247:252)] <- "N_A"
+    df$condition[df$group_id %in% c(254:259)] <- "W_A"
+    
+    # Task6
+    df$condition[df$group_id %in% c(265:270)] <- "N_A"
+    df$condition[df$group_id %in% c(272:277)] <- "W_A"
   }
   
   df
@@ -40,6 +48,15 @@ addTask <- function(df) {
     
     # Task3
     df$task[df$group_id %in% c(211:224)] <- "task3"
+    
+    # Task4
+    df$task[df$group_id %in% c(230:242)] <- "task4"
+    
+    # Task5
+    df$task[df$group_id %in% c(247:259)] <- "task5"
+    
+    # Task6
+    df$task[df$group_id %in% c(265:277)] <- "task6"
   }
   
   df
