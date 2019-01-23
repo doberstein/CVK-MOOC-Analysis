@@ -320,7 +320,7 @@ task1_activities_Ko <- task1_activities %>%
 
 # all task 1 activities for one group (154)
 task1_activities_154 <- task1_activities %>% 
-  filter(group_id == 154) %>% 
+  filter(group_id == 154)
 ```
 
 
