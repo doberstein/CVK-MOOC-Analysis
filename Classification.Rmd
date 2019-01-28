@@ -1,0 +1,103 @@
+---
+title: "Classification"
+output: html_notebook
+---
+
+```{r}
+library(dplyr)
+```
+
+
+### read data from mercur mooc
+```{r}
+files = list.files("/home/doberstein/Dropbox/D/uni/CRIWG/data/Classified Sequences/all_classified_sequences", full.names = TRUE)
+data_files=lapply(files, read.table, sep=";", as.is = T)
+for (i in 1:length(data_files)){data_files[[i]]<-cbind(data_files[[i]],files[i])}
+data <- do.call("rbind", data_files) 
+colnames(data)[c(1,2,3,4,5,6,7,8,9,10,11)]<-c("ID", "user", "type","start", "end", "period", "duration", "textChange", "content", "class", "filename")
+#allData <- data
+data <- data %>% 
+  filter(!class %in% c("None")) %>% 
+  filter(!user %in% c("user"))
+
+# data <- filter(data, !user == "user") %>% 
+#   filter(!class %in% c("start", "None"))
+
+#/home/doberstein/Dropbox/D/Masterarbeit/R
+
+newTimeData <- read.csv2(file = "/home/doberstein/Dropbox/D/Masterarbeit/R/completeIdleData.csv", header = T, sep = ",")
+newToolData <-  read.csv(file = "/home/doberstein/Dropbox/D/Masterarbeit/R/toolData.csv", header = T)
+newPosData <-  read.csv(file = "/home/doberstein/Dropbox/D/Masterarbeit/R/posData.csv", header = T)
+newUserChangeData <-  read.csv(file = "/home/doberstein/Dropbox/D/Masterarbeit/R/userChangeData.csv", header = T)
+newTextChangeData <-  read.csv2(file = "/home/doberstein/Dropbox/D/Masterarbeit/R/textChangeData.csv", header = T, sep = ";")
+
+
+data_ordered <- data %>% 
+  group_by(filename) %>% 
+  group_by(start, add = T) %>% 
+  arrange(filename, .by_group = T)
+
+newTimeData_ordered <- newTimeData %>% 
+  group_by(filename) %>% 
+  group_by(start, add = T) %>% 
+  arrange(filename, .by_group = T)
+
+newToolData_ordered <- newToolData %>% 
+  group_by(filename) %>% 
+  group_by(start, add = T) %>% 
+  arrange(filename, .by_group = T)
+
+newPosData_ordered <- newPosData %>% 
+  group_by(filename) %>% 
+  group_by(start, add = T) %>% 
+  arrange(filename, .by_group = T)
+
+newUserChangeData_ordered <- newUserChangeData %>% 
+  group_by(filename) %>% 
+  group_by(start, add = T) %>% 
+  arrange(filename, .by_group = T)
+
+newTextChangeData_ordered <- newTextChangeData %>% 
+  group_by(filename) %>% 
+  group_by(start, add = T) %>% 
+  arrange(filename, .by_group = T)
+
+
+data_ordered$idleSince <- newTimeData_ordered$idleSince
+data_ordered$toolChange <- newToolData_ordered$toolChange
+data_ordered$position <- newPosData_ordered$position
+data_ordered$userChange <- newUserChangeData_ordered$userChange
+data_ordered$textChange <- newTextChangeData_ordered$textChange
+
+```
+
+```{r}
+data_ordered <- data_ordered %>% 
+  group_by(filename) %>% 
+  mutate(pos1 = row_number())
+
+```
+#TODO
+reproduce feature calculation (without lists)
+  position            done
+  idle since          done (check negatives)
+  toolchange
+  user change   
+  fix text change?  
+
+```{r}
+data <- data %>% 
+  group_by(filename) %>% 
+  mutate(pos1 = row_number()-1)
+
+data <- data %>% 
+  group_by(filename) %>% 
+  arrange(start) %>% 
+  mutate(idle1 = as.numeric(start) - lag(as.numeric(end)))
+
+class(data$start)
+# mutate(ranking_change = -(rank -lag(rank)))
+```
+
+
+
