@@ -1,0 +1,47 @@
+---
+title: "Function Tests"
+output: html_notebook
+---
+
+/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/all_groups_and_users.csv
+
+```{r}
+## all activity sequences
+sequences_task1 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities_with_start.csv", stringsAsFactors = F) %>% subset(select=-c(X, class)) %>% 
+  addTask() %>% 
+###!!!### filter which task
+  filter(task == "task1") %>% 
+###!!!### filter type (forum / wiki)
+  #filter(type == "wiki") %>% 
+  filter(!user_id == "start" )
+
+groups_and_users_t1_t2_t3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/all_groups_and_users.csv", stringsAsFactors = F) %>% 
+  addTask()
+```
+
+
+
+```{r}
+seq_task1_period1 <- sequences_task1 %>% 
+  filter(period <= 2)
+seq_task1_period2 <- sequences_task1 %>% 
+  filter(period <= 4)
+```
+
+```{r}
+
+a_activity_counts_task1_period1 <- calculateUserActivityCountWithInactives(seq_task1_period1, groups_and_users_t1_t2_t3 %>% filter(task == "task1")) %>% 
+  addActivityRank2() %>%
+  normalizeRank() %>% 
+  addConditions()
+
+
+
+
+# activity_counts_task1_period2 <- calculateUserActivityCount(seq_task1_period2) %>% 
+#   addActivityRank2() %>%
+#   normalizeRank() %>%
+#   addConditions()
+```
+
+
