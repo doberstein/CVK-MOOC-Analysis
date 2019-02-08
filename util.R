@@ -87,6 +87,24 @@ calculateUserActivityCount <- function(df) {
   df
 }
 
+# calculate activity count for each group for sub-sequence and add inactive users with activity count = 0
+calculateUserActivityCountWithInactives <- function(df, all_users) {
+  df <- df %>% 
+    group_by(group_id, user_id) %>% 
+    summarise(activity_count = n())
+  all_users <- all_users %>% 
+    dplyr::select(c(group_id, user_id))
+  all_users$activity_count <- 0
+  
+  missing <- anti_join(all_users, df, by = c("group_id", "user_id"))
+  activity_count_all_users <- full_join(missing, df)
+  
+  
+  #browser()
+  # add inactive users from all_users
+  activity_count_all_users
+}
+
 addValues <- function (df1, df2, id) {
   df2$period <- id
   rbind(df1, df2)
