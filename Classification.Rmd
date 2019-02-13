@@ -91,7 +91,7 @@ reproduce feature calculation (without lists)
 # add position in sequence
 data_features <- data %>% 
   group_by(filename) %>% 
-  mutate(pos1 = row_number()-1)
+  mutate(position = row_number()-1)
 
 # clean content
 cleanFun <- function(htmlString) {
@@ -106,11 +106,11 @@ cleanFun <- function(htmlString) {
 data_features <- data_features %>% 
   group_by(filename) %>% 
   # add time since last activity
-  mutate(idle1 = as.numeric(start) - lag(as.numeric(start))) %>% 
+  mutate(idle_since = as.numeric(start) - lag(as.numeric(start))) %>% 
   # add tool change
-  mutate(tool_c = ifelse(type == lag(type), F, T)) %>% 
+  mutate(tool_change = ifelse(type == lag(type), F, T)) %>% 
   # add user change
-  mutate(user_c = ifelse(user == lag(user), F, T)) %>% 
+  mutate(user_change = ifelse(user == lag(user), F, T)) %>% 
   # clean content
   mutate(content_cleaned = cleanFun(content)) %>% 
   # add wordcount
@@ -154,6 +154,10 @@ all_data <- bind_rows(forum, etherpad) %>%
 all_data <- all_data %>% 
   filter(!class == "start")
 
+# fix period to be numerical
+all_data$period <- as.numeric(all_data$period)
+
+
 
 ```
 
@@ -169,27 +173,158 @@ svmTest <- all_data[-svmIndex,]
 ```
 
 
-###Training Model Random Forest
+###Training Model Random Forest (training and test data)
 ```{r}
 
 names(all_data)
 rf_fit <- train(class ~ wordcount + type + tool_c + idle1 + pos1 + period + user_c, data = svmTrain, method = "ranger")
-
 # saving and reading model
 # saveRDS(rf_fit, "C:/Users/doberstein/Dropbox/D/Masterarbeit/datasets/model.rds")
 # new_model <- readRDS("C:/Users/doberstein/Dropbox/D/Masterarbeit/datasets/model.rds")
-
-
 prediction_rf_fit <- predict(rf_fit, svmTest)
-
 svmTest$class_factor <- as.factor(svmTest$class)
-
 svmTest$class
 svmTest$class_factor
-
-
 confusionMatrix(prediction_rf_fit, svmTest$class_factor, mode = "everything")
 ```
+
+## checking dataformat for both datasets
+```{r}
+# wordcount     
+class(all_data$wordcount)
+class(t1_t2_t3_sequences$wordcount)
+
+# type     
+class(all_data$type)
+class(t1_t2_t3_sequences$type)
+
+# tool_change   
+class(all_data$tool_change)
+class(t1_t2_t3_sequences$tool_change)
+
+# idle_since    
+class(all_data$idle_since)
+class(t1_t2_t3_sequences$idle_since)
+
+# position    
+class(all_data$position)
+class(t1_t2_t3_sequences$position)
+
+# period      
+class(all_data$period)
+class(t1_t2_t3_sequences$period)
+
+# user_change   
+class(all_data$user_change)
+class(t1_t2_t3_sequences$user_change)
+
+```
+
+
+
+###Training model on complete dataset
+```{r}
+# train model
+rf_fit <- train(class ~ wordcount + type + tool_change + idle_since + position + period + user_change, data = all_data, method = "ranger")
+
+# read ikarion dataset
+t1_t2_t3_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/t1_t2_t3_activities_with_start.csv", stringsAsFactors = F) %>% 
+  subset(select=-c(X, class)) # %>% 
+  #filter(!type == "start")
+  
+
+#etherpad$wordcount_fixed[etherpad$wordcount_fixed < 0] <- -1
+t1_t2_t3_sequences$type[t1_t2_t3_sequences$type == "wiki"] <- "etherpad"
+
+# calculate features
+# wordcount     done
+# type          done
+# tool_change   done
+# idle_since    done
+# position      done
+# period        done
+# user_change   done
+
+# add position in sequence; 
+t1_t2_t3_sequences <- t1_t2_t3_sequences %>% 
+  group_by(group_id) %>% 
+  mutate(position = row_number()-1)
+
+t1_t2_t3_sequences <- t1_t2_t3_sequences %>% 
+  group_by(group_id) %>% 
+  # add time since last activity
+  #mutate(idle_since = as.numeric(start) - lag(as.numeric(start))) %>% 
+  # add tool change
+  mutate(tool_change = ifelse(type == lag(type), F, T)) %>% 
+  # add user change
+  mutate(user_change = ifelse(user_id == lag(user_id), F, T)) %>% 
+  mutate(idle_since = as.numeric(timestamp) - lag(as.numeric(timestamp)))
+
+# delete start activities
+t1_t2_t3_sequences <- t1_t2_t3_sequences %>% 
+  filter(!type == "start")
+
+
+# # fix NA values for tool_change and user_change
+#   t1_t2_t3_sequences$tool_change[is.na(t1_t2_t3_sequences$tool_change)] <- F  
+#   t1_t2_t3_sequences$user_change[is.na(t1_t2_t3_sequences$user_change)] <- F  
+
+# etherpad$wordcount_fixed[is.na(etherpad$wordcount_fixed)] <- etherpad$wordcount[is.na(etherpad$wordcount_fixed)]
+
+
+# t1_t2_t3_sequences <- t1_t2_t3_sequences %>% 
+#   group_by(group_id) %>% 
+#   # add time since last activity
+#   mutate(idle_since = as.numeric(start) - lag(as.numeric(start))) %>% 
+#   # add tool change
+#   mutate(tool_change = ifelse(type == lag(type), F, T)) %>% 
+#   # add user change
+#   mutate(user_change = ifelse(user == lag(user), F, T)) %>% 
+  
+
+```
+
+# classsify ikarion data
+```{r}
+prediction_t1_t2_t3 <- predict(rf_fit, t1_t2_t3_sequences)
+
+t1_t2_t3_sequences$predicted_class <- prediction_t1_t2_t3
+
+```
+
+check classification results
+```{r}
+i <<- 1
+```
+
+```{r}
+t1_t2_t3_sequences[i,]$content
+t1_t2_t3_sequences[i,]$predicted_class
+i <<- i+1
+
+```
+
+
+
+
+# ```{r}
+# check_classification <- function(df) {
+#   browser()
+#   for (row in )
+#   i = 1
+#   print(df[i,]$content)
+#   print(df[i,]$predicted_class)
+#   i = i+1
+# }
+# 
+# by(t1_t2_t3_sequences, 1:nrow(t1_t2_t3_sequences), function(row) check_classification())
+# 
+# check_classification(t1_t2_t3_sequences)
+# ```
+
+
+
+
 
 # NLP analysis
 detect prospetive / retrospective character of a message by analyzing the tense of the message using nlp
@@ -251,11 +386,19 @@ etherpad[etherpad$wordcount_fixed < 0,]$wordcount_fixed <- 0
 
 all_data$start == data_features$start
 
-# filter start activities
-
-
-
 svmTest$class
+
+class(data_features[2,]$start)
+
+class(t1_t2_t3_sequences[2,]$timestamp)
+
+class(all_data[2,]$period)
+
+t1 <- all_data
+t1$per2 <- as.numeric(t1$period)
+class(t1$period)
+class(t1$per2)
+class(t1_t2_t3_sequences$period)
 
 ```
 
