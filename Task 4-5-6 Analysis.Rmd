@@ -381,6 +381,11 @@ gini_coeff_overall <- wordcount_for_all_users %>%
   group_by(group_id) %>% 
   summarize(gini_overall = gini(overall_wordcount)*length(overall_wordcount)/(length(overall_wordcount)-1))
 
+gini_coeff_overall_active_users <- wordcount_for_all_users %>% 
+  filter(overall_wordcount > 0) %>% 
+  group_by(group_id) %>% 
+  summarize(gini_overall = gini(overall_wordcount)*length(overall_wordcount)/(length(overall_wordcount)-1))
+
 ```
 
 ### WORDCOUNTS AND GINI AFTER DAY 3
