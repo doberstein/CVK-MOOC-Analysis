@@ -220,6 +220,34 @@ class(t1_t2_t3_sequences$user_change)
 
 ```
 
+### fit model for ikarion data (type:"etherpad" -> type:"wiki")
+```{r}
+fitted_data <- all_data
+
+#  etherpad$wordcount_fixed[etherpad$wordcount_fixed < 0] <- -1
+
+fitted_data$type[fitted_data$type == "etherpad"] <- "wiki"
+
+fitted_data$type
+
+
+levels(fitted_data$type)
+
+is.factor(fitted_data$type)
+
+fitted_data$type <- as.factor(fitted_data$type)
+
+
+rf_model <- train(class ~ wordcount + type + tool_change + idle_since + position + period + user_change, data = fitted_data, method = "ranger")
+
+#unique
+
+
+# saving and reading model
+saveRDS(rf_model, "/home/doberstein/R Projects/ikarion_analytics_dashboard/dashboard/model/rf_model.rds")
+# new_model <- readRDS("C:/Users/doberstein/Dropbox/D/Masterarbeit/datasets/model.rds")
+
+```
 
 
 ###Training model on complete dataset
@@ -289,6 +317,8 @@ t1_t2_t3_sequences <- t1_t2_t3_sequences %>%
 prediction_t1_t2_t3 <- predict(rf_fit, t1_t2_t3_sequences)
 
 t1_t2_t3_sequences$predicted_class <- prediction_t1_t2_t3
+
+
 
 ```
 
