@@ -157,6 +157,8 @@ all_data <- all_data %>%
 # fix period to be numerical
 all_data$period <- as.numeric(all_data$period)
 
+# wite data
+#write.csv2(all_data, "/home/doberstein/Dropbox/D/uni/IKARion/documents - chiara hachenberg/data/MERCUR - data - classified.csv")
 
 
 ```
@@ -177,7 +179,7 @@ svmTest <- all_data[-svmIndex,]
 ```{r}
 
 names(all_data)
-rf_fit <- train(class ~ wordcount + type + tool_c + idle1 + pos1 + period + user_c, data = svmTrain, method = "ranger")
+rf_fit <- train(class ~ wordcount + type + tool_change + idle_since + position + period + user_change, data = svmTrain, method = "ranger")
 # saving and reading model
 # saveRDS(rf_fit, "C:/Users/doberstein/Dropbox/D/Masterarbeit/datasets/model.rds")
 # new_model <- readRDS("C:/Users/doberstein/Dropbox/D/Masterarbeit/datasets/model.rds")
@@ -244,7 +246,7 @@ rf_model <- train(class ~ wordcount + type + tool_change + idle_since + position
 
 
 # saving and reading model
-saveRDS(rf_model, "/home/doberstein/R Projects/ikarion_analytics_dashboard/dashboard/model/rf_model.rds")
+#saveRDS(rf_model, "/home/doberstein/R Projects/ikarion_analytics_dashboard/dashboard/model/rf_model.rds")
 # new_model <- readRDS("C:/Users/doberstein/Dropbox/D/Masterarbeit/datasets/model.rds")
 
 ```
@@ -308,6 +310,9 @@ t1_t2_t3_sequences <- t1_t2_t3_sequences %>%
 #   mutate(tool_change = ifelse(type == lag(type), F, T)) %>% 
 #   # add user change
 #   mutate(user_change = ifelse(user == lag(user), F, T)) %>% 
+
+# wite data
+#write.csv2(t1_t2_t3_sequences, "/home/doberstein/Dropbox/D/uni/IKARion/documents - chiara hachenberg/data/IKARion - data.csv")
   
 
 ```
@@ -433,6 +438,73 @@ class(t1_t2_t3_sequences$period)
 ```
 
 
+
+###
+data for classification part 2 (chiara hachenberg)
+###Training model on complete dataset
+```{r}
+# train model
+rf_fit <- train(class ~ wordcount + type + tool_change + idle_since + position + period + user_change, data = all_data, method = "ranger")
+
+# read ikarion dataset
+t4_t5_t6_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/data filipa/data/t4_t5_t6_activities_with_start.csv", stringsAsFactors = F) %>% 
+  subset(select=-c(class)) #%>% 
+  filter(!type == "start")
+  
+
+#etherpad$wordcount_fixed[etherpad$wordcount_fixed < 0] <- -1
+t4_t5_t6_sequences$type[t4_t5_t6_sequences$type == "wiki"] <- "etherpad"
+
+# calculate features
+# wordcount     done
+# type          done
+# tool_change   done
+# idle_since    done
+# position      done
+# period        done
+# user_change   done
+
+# add position in sequence; 
+t4_t5_t6_sequences <- t4_t5_t6_sequences %>% 
+  group_by(group_id) %>% 
+  mutate(position = row_number()-1)
+
+t4_t5_t6_sequences <- t4_t5_t6_sequences %>% 
+  group_by(group_id) %>% 
+  # add time since last activity
+  #mutate(idle_since = as.numeric(start) - lag(as.numeric(start))) %>% 
+  # add tool change
+  mutate(tool_change = ifelse(type == lag(type), F, T)) %>% 
+  # add user change
+  mutate(user_change = ifelse(user_id == lag(user_id), F, T)) %>% 
+  mutate(idle_since = as.numeric(timestamp) - lag(as.numeric(timestamp)))
+
+# delete start activities
+t4_t5_t6_sequences <- t4_t5_t6_sequences %>% 
+  filter(!type == "start")
+
+
+# # fix NA values for tool_change and user_change
+#   t1_t2_t3_sequences$tool_change[is.na(t1_t2_t3_sequences$tool_change)] <- F  
+#   t1_t2_t3_sequences$user_change[is.na(t1_t2_t3_sequences$user_change)] <- F  
+
+# etherpad$wordcount_fixed[is.na(etherpad$wordcount_fixed)] <- etherpad$wordcount[is.na(etherpad$wordcount_fixed)]
+
+
+# t1_t2_t3_sequences <- t1_t2_t3_sequences %>% 
+#   group_by(group_id) %>% 
+#   # add time since last activity
+#   mutate(idle_since = as.numeric(start) - lag(as.numeric(start))) %>% 
+#   # add tool change
+#   mutate(tool_change = ifelse(type == lag(type), F, T)) %>% 
+#   # add user change
+#   mutate(user_change = ifelse(user == lag(user), F, T)) %>% 
+
+# wite data
+#write.csv2(t4_t5_t6_sequences, "/home/doberstein/Dropbox/D/uni/IKARion/documents - chiara hachenberg/data/IKARion - dataset2.csv")
+  
+
+```
 
 
 
