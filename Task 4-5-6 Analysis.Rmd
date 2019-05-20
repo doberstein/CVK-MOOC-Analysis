@@ -524,6 +524,8 @@ gini_over_time <- merge(gini_coeff_3d, gini_coeff_7d) %>%
   merge(gini_coeff_12d) %>% 
   merge(gini_coeff_14d) %>% 
   addConditions()
+
+gini_over_time
 ```
 
 
