@@ -64,6 +64,13 @@ seq_task1_period7 <- sequences_task1 %>%
 ```
 
 ```{r}
+# adding inactive users
+#***
+View(seq_task1_period1)
+
+#***
+
+
 activity_counts_task1_period1 <- calculateUserActivityCount(seq_task1_period1) %>% 
   addActivityRank2() %>%
   normalizeRank() %>% 
