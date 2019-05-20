@@ -1,0 +1,40 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(dplyr)
+```
+
+```{r}
+task1 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_activities.csv")
+
+task2 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_activities.csv")
+
+task3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_activities.csv")
+
+task4 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task4_activities.csv")
+
+task5 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task5_activities.csv")
+
+task6 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task6_activities.csv")
+
+data_t1_6 <- rbind(task1, task2) %>% 
+  rbind(task3) %>% 
+  rbind(task4) %>% 
+  rbind(task5) %>% 
+  rbind(task6) %>% 
+  filter(object_type == "http://collide.info/moodle_wiki_page") %>% 
+  group_by(group_id) %>% 
+  filter(row_number()==n()) %>% 
+  addConditions() %>% 
+  addTask() %>% 
+  subset(select = -c(wordcount, X))
+
+write.csv2(data_t1_6, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/final_wiki_articles_W.csv", row.names = F, fileEncoding = "WINDOWS-1252")
+  
+
+```
+
+
