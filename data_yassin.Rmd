@@ -24,7 +24,11 @@ data_t1_6 <- rbind(task1, task2) %>%
   rbind(task3) %>% 
   rbind(task4) %>% 
   rbind(task5) %>% 
-  rbind(task6) %>% 
+  rbind(task6)
+
+write.csv2(data_t1_6, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/IKARion_CVK_activity_data.csv", row.names = F)
+
+%>% 
   filter(object_type == "http://collide.info/moodle_wiki_page") %>% 
   group_by(group_id) %>% 
   filter(row_number()==n()) %>% 
