@@ -12,6 +12,7 @@ library(TraMineR)
 library(fpc)
 library(anytime)
 library(stringr)
+library(apcluster)
 
 source("util.R")
 ```
@@ -383,5 +384,83 @@ wordcounts_by_cluster <- wordcounts_memberships %>%
             )
 
 ```
-  
+
+AP CLUSTERING  
+```{r}
+#relevant_actions <- c("start", "Coordination", "Monitoring ", "Major Contribution", "Other", "Minor Contribution", "None")
+relevant_actions_ap <- c("start", "Coordination", "Monitoring ", "Major Contribution", "Minor Contribution")
+# create state sequence object from all sequences
+sequences_ap <- seqdef(named_sequences)
+
+#calculate distances for
+#submat <- seqsubm(sequences, method="TRATE")
+submat_ap <- seqsubm(sequences, method="CONSTANT", cval = 1)
+submat_ap["gap->",paste(relevant_actions_ap, "->", sep="")] <- 2
+submat_ap[paste(relevant_actions, "->", sep=""), "gap->"] <- 2
+distances_ap <<- seqdist(sequences, method = "OM", sm=submat)
+distances_manual_ap <<- distances_ap
+
+# apcluster works with a similarity matrix so we negate the distance 
+distances_ap <- apply(distances, MARGIN = c(1,2), function(x) x*(-1))
+
+# In R, it may be calculated:
+# 
+# For example, you have a matrix, saying A, which 200 * 300. [200 sequences, and each equence is presented by 300 features]
+# 
+# library(fields)   # fast way to calculate the distance
+# 
+# dist <- (rdist(A))^2    # dist is 200 * 200 distance matrix
+# 
+# t <- mean(dist) 
+# 
+# simMat <- exp(-dist / (2 * t^2))
+# 
+# Maybe, here simMat is what you want.
+# 
+# Hope this help.
+
+#numClusters <- 2
+
+clusters_ap <- apcluster(distances_ap)
+
+clusters_ap@clusters
+
+
+transformClust <- 1:29
+transformClust[clusters_ap@clusters[[1]]] <- 1
+transformClust[clusters_ap@clusters[[2]]] <- 2
+transformClust[clusters_ap@clusters[[3]]] <- 3
+transformClust[clusters_ap@clusters[[4]]] <- 4
+transformClust[clusters_ap@clusters[[5]]] <- 5
+transformClust[clusters_ap@clusters[[6]]] <- 6
+transformClust[clusters_ap@clusters[[7]]] <- 7
+
+print(transformClust)
+
+numClusters <- 7
+clusterNames <- factor(transformClust, labels=paste("Type", 1:numClusters))
+
+diagram <- seqiplot(sequences, group = clusterNames, idxs = 40)
+
+
+diagram
+
+
+
+# clustersPamk <- pamk(distances, krange = numClusters, diss = TRUE, usepam = T)$pamobject$clustering
+# membership_manual <<- clustersPamk
+# 
+# # for pamk
+# clusterNames <- factor(clustersPamk, labels=paste("Type", 1:numClusters))
+# 
+# # print cluster statistics for pam clustering
+# print(cluster.stats(distances, clustersPamk, silhouette = T, G2 = T, G3 = T, wgap = T))
+# 
+# 
+# #diagram <- seqiplot(sequences, group = clusterNames, cex.plot = 1, cex.legend = 2, axes = F, cols = 1)
+# diagram <- seqiplot(sequences, group = clusterNames, idxs = 40)
+
+
+```
+
   
