@@ -22,12 +22,17 @@ read hand classified data (without start activities)
 data_t1_3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/documents - chiara hachenberg/classified_data/IKARion - data - classified.csv", stringsAsFactors = F) %>% 
   addTask()
 
+data_t1_3$day <- as.Date(data_t1_3$day, format = "%d.%m.%Y")
+
 data_t4_6 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/documents - chiara hachenberg/classified_data/IKARion - dataset2-classified.csv", stringsAsFactors = F)
+
+data_t4_6$day <- as.Date(data_t4_6$day, format = "%d.%m.%Y")
 
 complete_data_classified <- rbind(data_t1_3, data_t4_6) %>% 
   subset(select = -X)
 
 ```
+
 
 read unclassified data (including start activities)
 ```{r}
@@ -260,11 +265,13 @@ half_time_activities$day <- as.Date(half_time_activities$day) +7
 # careful! plyr rbind.fill in currently used as rbind creates a large list instead of concatenating dataframes
 
 
-library(plyr)
+#library(plyr)
 
 
 
-classified_dataset_t2_t3_fh <- rbind.fill(classified_dataset_t2_t3_fh, half_time_activities) %>% 
+
+
+classified_dataset_t2_t3_fh <- bind_rows(classified_dataset_t2_t3_fh, half_time_activities) %>% 
   group_by(group_id) %>% 
   dplyr::arrange(timestamp, .by_group = T)
 
@@ -282,6 +289,8 @@ classified_dataset_t2_t3_fh <- rbind.fill(classified_dataset_t2_t3_fh, half_time
 
 
 ```
+
+
 check for same names in dataframes
 ```{r}
 # check_df_names <- function(x,y) {
@@ -363,6 +372,13 @@ wordcounts_memberships$named_sequences_fh <- named_sequences_fh
 ```
 
 
+adding survey results for cluster evaluation
+```{r}
+survey_data_t2_t3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/survey - sequence - analysis/group_survey_data_t2_t3", stringsAsFactors = F)
+
+wordcounts_memberships <- full_join(wordcounts_memberships, survey_data_t2_t3)
+```
+
 
 ```{r}
 # dataset with memberships and final wiki wordcounts
@@ -380,10 +396,19 @@ wordcounts_by_cluster <- wordcounts_memberships %>%
             average_gap_count = mean(gap_count), sd_gap_count = sd(gap_count),
             average_coordination_count = mean(coordination_count), sd_coordination_count = sd(coordination_count),
             average_gap_count_fh = mean(gap_count_fh), sd_gap_count_fh = sd(gap_count_fh),
-            average_coordination_count_fh = mean(coordination_count_fh), sd_coordination_count_fh = sd(coordination_count_fh)
+            average_coordination_count_fh = mean(coordination_count_fh), sd_coordination_count_fh = sd(coordination_count_fh),
+            average_zufried09 = mean(Zufried_09), sd_zufried09 = sd(Zufried_09),
+            average_zufried10 = mean(Zufried_10), sd_zufried10 = sd(Zufried_10)
             )
 
+
+
+
 ```
+
+
+
+
 
 AP CLUSTERING  
 ```{r}
@@ -396,12 +421,15 @@ sequences_ap <- seqdef(named_sequences)
 #submat <- seqsubm(sequences, method="TRATE")
 submat_ap <- seqsubm(sequences, method="CONSTANT", cval = 1)
 submat_ap["gap->",paste(relevant_actions_ap, "->", sep="")] <- 2
-submat_ap[paste(relevant_actions, "->", sep=""), "gap->"] <- 2
+submat_ap[paste(relevant_actions_ap, "->", sep=""), "gap->"] <- 2
 distances_ap <<- seqdist(sequences, method = "OM", sm=submat)
 distances_manual_ap <<- distances_ap
 
 # apcluster works with a similarity matrix so we negate the distance 
 distances_ap <- apply(distances, MARGIN = c(1,2), function(x) x*(-1))
+
+
+
 
 # In R, it may be calculated:
 # 
@@ -463,4 +491,35 @@ diagram
 
 ```
 
-  
+K-MEANS CLUSTERING  
+```{r}
+#relevant_actions <- c("start", "Coordination", "Monitoring ", "Major Contribution", "Other", "Minor Contribution", "None")
+relevant_actions_km <- c("start", "Coordination", "Monitoring ", "Major Contribution", "Minor Contribution")
+# create state sequence object from all sequences
+sequences_km <- seqdef(named_sequences)
+
+#calculate distances for
+#submat <- seqsubm(sequences, method="TRATE")
+submat_km <- seqsubm(sequences, method="CONSTANT", cval = 1)
+submat_km["gap->",paste(relevant_actions_km, "->", sep="")] <- 2
+submat_km[paste(relevant_actions_km, "->", sep=""), "gap->"] <- 2
+distances_km <<- seqdist(sequences, method = "OM", sm=submat)
+distances_manual_ap <<- distances_ap
+
+
+
+numClusters <- 2
+
+clusters <- kmeans(distances,numClusters, nstart = 100)
+
+clusterNames <- factor(clusters$cluster, labels=paste("Type", 1:numClusters))
+
+diagram <- seqiplot(sequences, group = clusterNames, idxs = 100)
+
+list(clustering=clusters, plot=diagram)
+
+
+
+
+
+```
