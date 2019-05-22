@@ -1,0 +1,74 @@
+---
+title: "survey analysis"
+output: html_notebook
+---
+
+```{r}
+library(haven)
+
+```
+our task naming schema (rub study: first 3 tasks:
+t1 - t3
+
+survey task naming schema:
+T1 (indidivual task) - T4 (T2 - T4 group tasks)
+
+COLLIDE RUB
+t1      T2
+t2      T3
+t3      T4
+
+data for first task (t1/T2)is not used because of techincal difficulties during the first task (infrastructure outage)
+
+Zufried09:  Zufriedenheit "Insg. bin ich zufrieden" (Gruppenebene)
+Zufried10:  Zufriedenheit "gerne wieder" (Gruppenebene)
+
+
+
+```{r}
+survey_data <- read_sav("/home/doberstein/Dropbox/D/uni/CVK Course Analysis/_IKARion cvk_RUB_final_fürCollide.sav") %>% 
+  filter(!grepl("dummy", token.Zugangsschlüssel))
+```
+
+```{r}
+
+survey_data_t2 <- survey_data %>% 
+  subset(select = c("token.Zugangsschlüssel", "condition", "grp_id_Thema3", "Zufried_09_Grp_T3", "Zufried10_Grp_T3")) %>% 
+  filter(!is.na(grp_id_Thema3)) %>% 
+  filter(!is.na(Zufried_09_Grp_T3)) %>% 
+  arrange(grp_id_Thema3)
+
+
+group_survey_data_t2 <- survey_data %>% 
+  subset(select = c("grp_id_Thema3", "Zufried_09_Grp_T3", "Zufried10_Grp_T3")) %>% 
+  filter(!is.na(grp_id_Thema3)) %>% 
+  filter(!is.na(Zufried_09_Grp_T3)) %>% 
+  arrange(grp_id_Thema3) %>% 
+  distinct() %>% 
+  dplyr::rename("Zufried_09" = "Zufried_09_Grp_T3") %>% 
+  dplyr::rename("Zufried_10" = "Zufried10_Grp_T3") %>% 
+  dplyr::rename("group_id" = "grp_id_Thema3")
+
+
+group_survey_data_t3 <- survey_data %>% 
+  subset(select = c("grp_id_Thema4", "Zufried_09_Grp_T4", "Zufried10_Grp_T4")) %>% 
+  filter(!is.na(grp_id_Thema4)) %>% 
+  filter(!is.na(Zufried_09_Grp_T4)) %>% 
+  arrange(grp_id_Thema4) %>% 
+  distinct() %>% 
+  dplyr::rename("Zufried_09" = "Zufried_09_Grp_T4") %>% 
+  dplyr::rename("Zufried_10" = "Zufried10_Grp_T4") %>% 
+  dplyr::rename("group_id" = "grp_id_Thema4")
+
+#group_survey_data_t2 <- dplyr::rename("test" = "Zufried_09_Grp_T3" )
+
+group_survey_data_t2_t3 <- rbind(group_survey_data_t2, group_survey_data_t3)
+
+write.csv2(group_survey_data_t2_t3, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/survey - sequence - analysis/group_survey_data_t2_t3", row.names = F)
+
+```
+
+```{r}
+names(survey_data)
+```
+
