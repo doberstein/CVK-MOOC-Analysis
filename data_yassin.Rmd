@@ -24,21 +24,52 @@ data_t1_6 <- rbind(task1, task2) %>%
   rbind(task3) %>% 
   rbind(task4) %>% 
   rbind(task5) %>% 
-  rbind(task6)
-
-write.csv2(data_t1_6, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/IKARion_CVK_activity_data.csv", row.names = F)
-
-%>% 
+  rbind(task6) %>% # stop here for all activities
   filter(object_type == "http://collide.info/moodle_wiki_page") %>% 
   group_by(group_id) %>% 
   filter(row_number()==n()) %>% 
   addConditions() %>% 
   addTask() %>% 
-  subset(select = -c(wordcount, X))
+  subset(select = -c(wordcount, X)) # full pipes for last wiki edits
 
-write.csv2(data_t1_6, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/final_wiki_articles_W.csv", row.names = F, fileEncoding = "WINDOWS-1252")
+# one write for all activities
+# one write for 
+
+# write.csv2(data_t1_6, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/final_wiki_articles_W.csv", row.names = F, fileEncoding = "WINDOWS-1252")
+# write.csv2(data_t1_6, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/IKARion_CVK_activity_data.csv", row.names = F)
   
 
 ```
+
+
+```{r}
+gini_t1 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_work_imbalances.csv", stringsAsFactors = F)
+gini_t2 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_work_imbalances.csv", stringsAsFactors = F)
+gini_t3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_work_imbalances.csv", stringsAsFactors = F)
+gini_t4 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task4_work_imbalances.csv", stringsAsFactors = F)
+gini_t5 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task5_work_imbalances.csv", stringsAsFactors = F)
+gini_t6 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task6_work_imbalances.csv", stringsAsFactors = F)
+
+all_gini <- bind_rows(gini_t1, gini_t2, gini_t3, gini_t4, gini_t5, gini_t6) %>% 
+  subset(select = -X)
+
+# write.csv2(all_gini, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/CKV analysis - sequence - survey/IKARion_CVK_gini_t1_t6.csv", row.names = F)
+```
+
+```{r}
+groups_users_t1 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_groups_and_users.csv", stringsAsFactors = F)
+groups_users_t2 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_groups_and_users.csv", stringsAsFactors = F)
+groups_users_t3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_groups_and_users.csv", stringsAsFactors = F)
+groups_users_t4 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task4_groups_and_users.csv", stringsAsFactors = F)
+groups_users_t5 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task5_groups_and_users.csv", stringsAsFactors = F)
+groups_users_t6 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task6_groups_and_users.csv", stringsAsFactors = F)
+
+all_groups_users_t1_t6 <- bind_rows(groups_users_t1,groups_users_t2, groups_users_t3, groups_users_t4, groups_users_t5, groups_users_t6) %>% 
+  subset(select = -X)
+
+# write.csv2(all_groups_users_t1_t6, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/CKV analysis - sequence - survey/IKARion_CVK_user_group_mapping.csv", row.names = F)
+
+```
+
 
 
