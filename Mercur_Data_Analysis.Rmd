@@ -1,0 +1,66 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+calculate inter-rater reliability for first classifire dataset (tobias/dorian/linnéa) and second dataset (chiara)
+
+```{r}
+library(irr)
+```
+
+
+```{r}
+# load original clasified data
+
+original_data <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/documents - chiara hachenberg/data/MERCUR - data - classified.csv", stringsAsFactors = F) %>% 
+  subset(select = -c(X, ID))
+
+new_data <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/documents - chiara hachenberg/classified_data/MERCUR - data - classified - Chiara.csv", stringsAsFactors = F) %>% 
+  subset(select = -c(X, ID))
+
+new_classification <- new_data %>% 
+  subset(select = c(user, start, end, class)) %>% 
+  rename(new_class = class)
+
+```
+
+```{r}
+unique(original_data$class)
+unique(new_classification$new_class)
+```
+
+```{r}
+full_dataset <- full_join(original_data, new_classification, by = c("user", "start", "end"))
+
+irr_dataset <- full_dataset %>% 
+  subset(select = c(class, new_class))
+
+agree(irr_dataset)
+kappa2(irr_dataset)
+kappam.fleiss(irr_dataset)
+rater.bias(irr_dataset)
+
+original_class_count <- full_dataset %>% 
+  group_by(class) %>% 
+  summarise(count1 = n()) %>% 
+  add_row(class = "None", count1 = 0)
+
+
+new_class_count <- full_dataset %>% 
+  group_by(new_class) %>% 
+  summarise(count2 = n())
+
+class_count <- full_join(original_class_count, new_class_count, by = c(class = "new_class"))
+
+```
+```{r}
+names(original_class_count)
+```
+```{r}
+t1 <- new_data[14:15,]
+
+t1[2,]$content_cleaned
+```
+
+
