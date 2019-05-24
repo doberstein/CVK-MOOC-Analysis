@@ -153,15 +153,6 @@ classified_dataset_t2_t3 %>%
 
 
 ```{r}
-groups_and_sequences <- data_frame(group_id = unique(classified_dataset_t2_t3$group_id), membership_manual, named_sequences)
-
-# groups_and_sequences[4,]$group_id
-# groups_and_sequences[4,]$membership_manual
-# groups_and_sequences[4,]$named_sequences
-
-```
-
-```{r}
 # final wordcount in wiki articles
 
 all_wiki_wordcounts <- classified_dataset_t2_t3 %>%
@@ -177,23 +168,6 @@ all_wiki_wordcounts <- classified_dataset_t2_t3 %>%
 #str_count(s1, "um")
 ```
 
-
-```{r}
-# dataset with memberships and final wiki wordcounts
-
-wordcounts_memberships <- merge(x = groups_and_sequences, y = all_wiki_wordcounts, by = "group_id") %>% 
-  subset(select = c(group_id, membership_manual, content, named_sequences, wordcount, condition, day, period, task))
-
-wordcounts_memberships$gap_count <- str_count(wordcounts_memberships$named_sequences, "gap")
-wordcounts_memberships$coordination_count <- str_count(wordcounts_memberships$named_sequences, "Coordination")
-
-wordcounts_by_cluster <- wordcounts_memberships %>% 
-  group_by(membership_manual) %>% 
-  summarise(average_wordcount = mean(wordcount), sd_wordcount = sd(wordcount),
-            average_gap_count = mean(gap_count), sd_gap_count = sd(gap_count),
-            average_coordination_count = mean(coordination_count), sd_coordination_count = sd(coordination_count))
-
-```
 
 ```{r}
 #relevant_actions <- c("start", "Coordination", "Monitoring ", "Major Contribution", "Other", "Minor Contribution", "None")
@@ -223,6 +197,40 @@ print(cluster.stats(distances, clustersPamk, silhouette = T, G2 = T, G3 = T, wga
 
 #diagram <- seqiplot(sequences, group = clusterNames, cex.plot = 1, cex.legend = 2, axes = F, cols = 1)
 diagram <- seqiplot(sequences, group = clusterNames, idxs = 40)
+```
+
+```{r}
+groups_and_sequences <- data_frame(group_id = unique(classified_dataset_t2_t3$group_id), membership_manual, named_sequences)
+
+# groups_and_sequences[4,]$group_id
+# groups_and_sequences[4,]$membership_manual
+# groups_and_sequences[4,]$named_sequences
+
+```
+
+```{r}
+# dataset with memberships and final wiki wordcounts
+
+wordcounts_memberships <- merge(x = groups_and_sequences, y = all_wiki_wordcounts, by = "group_id") %>% 
+  subset(select = c(group_id, membership_manual, content, named_sequences, wordcount, condition, day, period, task))
+
+wordcounts_memberships$gap_count <- str_count(wordcounts_memberships$named_sequences, "gap")
+wordcounts_memberships$coordination_count <- str_count(wordcounts_memberships$named_sequences, "Coordination")
+
+
+
+activity_counts <- classified_dataset_t2_t3 %>% 
+  group_by(group_id) %>% 
+  summarise("activity_count" = n() - 1)
+
+wordcounts_memberships <- full_join(wordcounts_memberships, activity_counts)
+
+wordcounts_by_cluster <- wordcounts_memberships %>% 
+  group_by(membership_manual) %>% 
+  summarise(average_wordcount = mean(wordcount), sd_wordcount = sd(wordcount),
+            average_gap_count = mean(gap_count), sd_gap_count = sd(gap_count),
+            average_coordination_count = mean(coordination_count), sd_coordination_count = sd(coordination_count))
+
 ```
 
 ### ANALYSIS FOR FIRST HALF ###
@@ -374,10 +382,18 @@ wordcounts_memberships$named_sequences_fh <- named_sequences_fh
 
 adding survey results for cluster evaluation
 ```{r}
-survey_data_t2_t3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/survey - sequence - analysis/group_survey_data_t2_t3", stringsAsFactors = F)
+survey_data_t2_t3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/CKV analysis - sequence - survey/group_survey_data_t2_t3", stringsAsFactors = F)
 
 wordcounts_memberships <- full_join(wordcounts_memberships, survey_data_t2_t3)
 ```
+
+adding gini for cluster evaluation
+```{r}
+gini_data_t2_t3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/CKV analysis - sequence - survey/gini_t2_t3", stringsAsFactors = F)
+
+wordcounts_memberships <- full_join(wordcounts_memberships, gini_data_t2_t3)
+```
+
 
 
 ```{r}
@@ -390,19 +406,33 @@ wordcounts_memberships$gap_count_fh <- str_count(wordcounts_memberships$named_se
 wordcounts_memberships$coordination_count_fh <- str_count(wordcounts_memberships$named_sequences_fh, "Coordination")
 
 
-wordcounts_by_cluster <- wordcounts_memberships %>% 
+wordcounts_by_cluster_sd <- wordcounts_memberships %>% 
   dplyr::group_by(membership_manual) %>% 
   dplyr::summarise(average_wordcount = mean(wordcount), sd_wordcount = sd(wordcount),
-            average_gap_count = mean(gap_count), sd_gap_count = sd(gap_count),
-            average_coordination_count = mean(coordination_count), sd_coordination_count = sd(coordination_count),
-            average_gap_count_fh = mean(gap_count_fh), sd_gap_count_fh = sd(gap_count_fh),
-            average_coordination_count_fh = mean(coordination_count_fh), sd_coordination_count_fh = sd(coordination_count_fh),
-            average_zufried09 = mean(Zufried_09), sd_zufried09 = sd(Zufried_09),
-            average_zufried10 = mean(Zufried_10), sd_zufried10 = sd(Zufried_10)
+            average_gap_count = mean(gap_count), sd_gc = sd(gap_count),
+            average_coordination_count = mean(coordination_count), sd_cc = sd(coordination_count),
+            average_activity_count = mean(activity_count), sd_ac = sd(activity_count),
+            average_gap_count_fh = mean(gap_count_fh), sd_gc_fh = sd(gap_count_fh),
+            average_coordination_count_fh = mean(coordination_count_fh), sd_cc_fh = sd(coordination_count_fh),
+            average_zufried09 = mean(Zufried_09), sd_z09 = sd(Zufried_09),
+            average_zufried10 = mean(Zufried_10), sd_10 = sd(Zufried_10),
+            average_gini = mean(gini_index), sd_gini = sd(gini_index)
             )
 
 
+wordcounts_by_cluster <- wordcounts_memberships %>% 
+  dplyr::group_by(membership_manual) %>% 
+  dplyr::summarise(average_wordcount = mean(wordcount),
+            average_gap_count = mean(gap_count),
+            average_coordination_count = mean(coordination_count), 
+            average_gap_count_fh = mean(gap_count_fh),
+            average_coordination_count_fh = mean(coordination_count_fh),
+            average_zufried09 = mean(Zufried_09), 
+            average_zufried10 = mean(Zufried_10),
+            average_gini = mean(gini_index)
+            )
 
+#write.csv2(wordcounts_by_cluster_sd, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/CKV analysis - sequence - survey/pamk_2_cluster_measures_sd.csv", row.names = F)
 
 ```
 
