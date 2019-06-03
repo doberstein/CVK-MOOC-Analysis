@@ -1,0 +1,14 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+gini_t2 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_work_imbalances.csv", stringsAsFactors = F)
+gini_t3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_work_imbalances.csv", stringsAsFactors = F)
+
+gini_t2_t3 <- bind_rows(gini_t2, gini_t3) %>% 
+  subset(select = -c(X, condition))
+
+# write.csv2(gini_t2_t3, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/survey - sequence - analysis/gini_t2_t3", row.names = F)
+```
