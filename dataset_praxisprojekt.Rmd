@@ -1,0 +1,96 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+column names in first csv:
+"group_id";"content";"object_name";"object_type";"timestamp";"user_id";"verb_id";"type"
+
+to add: object_id
+
+```{r}
+library(dplyr)
+```
+
+# read data
+```{r}
+task1 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task1_activities.csv", stringsAsFactors = F)
+
+task2 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task2_activities.csv", stringsAsFactors = F)
+
+task3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task3_activities.csv", stringsAsFactors = F)
+
+task4 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task4_activities.csv", stringsAsFactors = F)
+
+task5 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task5_activities.csv", stringsAsFactors = F)
+
+task6 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/task6_activities.csv", stringsAsFactors = F)
+
+data_t1_6 <- rbind(task1, task2) %>% 
+  rbind(task3) %>% 
+  rbind(task4) %>% 
+  rbind(task5) %>% 
+  rbind(task6)
+```
+
+# anonymization functions
+```{r}
+names <- c("Annika", "Müller","Andre","Schwitalla","Christina","Thumulla","Desiree","Wiejowski","Charmila","Chandrasekaran","Jana","Horst","Lena","Kubernus","hadi","nasef","Lea","Frentzel-Beyme","Max","Mühlemeyer","Charlotte","Neuheuser","Demian","Lennard","Vasic","Agnes","Dyszlewski","Yannick","Runge","Jana","Volk","Francesca","Zapla","Martha","Friesen","Manuel","Krähling","Simone","Lipphardt","Beyza","Yilmaz","Lena","Herholz","Alina","Schmitz","Milan","Wevelsiep","Natalie","Boscher","Maren","Christiane","Deuster","Till","Leonard","Elsner","Jonas","Rockhoff","negin","bazaei","Katharina","Block","Simon","Krukowski","Natalie","Thies","Ibrahim","El","Sayed","David","Herbst","Matthias","Jendroska","Julia","Wortmann","Jule","Antonia","Franzen","Jelena","Grubic","Sarah","Mesenich","Sebastian","Schößler","Ronja","Anke","Deegener","Luisa","Friedrich","Mareen","Harbring","Anne","Mainz","Lena","Brunk","Thomas","Ulmer","Leoni","Waesch","Alexandra","Bergen","Aleksandar","Blitva-Lazic","Milena","Tedeschi","Necla","Telli","Anna","Bierwirth","Dominik","Pazdyka","Ghulam-Jahja","Randjoor","Patrizia","Ring","Manuel","Birghan","Anna","Frett","Annalena","Wiegandt","Mirjana","Tanja","Borkenfeld","Meryem","Duman","Jana","Gawlik","Nathalie","Rudolf","Emelly","Dikerman","Jan","Kunzel","Jaqueline","Meier","Kristin","Stopka","Jana","Haufmann","Lea","Parker","Konstantin","Vogel","Bardia","Asemi-Soloot","Christine","Huth","Dominik","Lawatsch","Lisa","Ntiamoah","Stephanie","Angela","Tölle","Leonard","Dorok","Philipp","Justus","Sangeetha","Thillaiampalam","Daniela","Zurek","Kevin","Baulig","Esra","Kalayci","Pierre","Nobbe","Kim","Sommer", "Tom")
+
+s_before <- "(?<![\\w\\d])"
+s_after <- "(?![\\w\\d])"
+
+create_regex <- function(input) {
+  s_replace <- paste(s_before, input, s_after, sep = "")
+  print(s_replace)
+}
+
+replace_function <- function(data, name_regex) {
+  data <- gsub(name_regex, "<redacted>", data, ignore.case = T, perl = T) 
+}
+
+```
+
+# anonymize data
+```{r}
+anon_data <- data_t1_6
+
+for (j in 1: length(names)) {
+  
+  name <- names[j]
+  replace_regex <- create_regex(name)
+  
+  for (i in 1:nrow(anon_data) ) {
+    anon_data[i,]$content <- replace_function(anon_data[i,]$content, replace_regex)
+  }
+}
+```
+
+# data processing and adding start activities
+```{r}
+start_act <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/start_activities.csv", stringsAsFactors = F)
+
+#"group_id";"content";"object_name";"object_type";"timestamp";"user_id";"verb_id";"type"
+
+IKARion_CSK_data <- anon_data %>% 
+  subset(select = c("group_id","content", "object_name", "object_type", "timestamp", "user_id", "verb_id", "object_id")) %>% 
+  mutate(type = ifelse(object_type == "http://id.tincanapi.com/activitytype/forum-topic", "forum", "wiki"))
+
+
+start_act <- start_act %>% 
+  subset(select = c("group_id","content", "object_name", "object_type", "timestamp", "user_id", "verb_id", "object_id"))
+
+start_act$type <- "start"
+
+IKARion_CSK_data <- full_join(IKARion_CSK_data, start_act) %>% 
+  group_by(group_id) %>% 
+  arrange(timestamp, .by_group = T)
+
+```
+
+```{r}
+write.csv2(IKARion_CSK_data, "/home/doberstein/Dropbox/D/uni/Praxisprojekt SS19/data/IKARion_CVK_Course_T1_T6.csv", row.names = F)
+
+write.csv2(IKARion_CSK_data, "/home/doberstein/Dropbox/D/uni/Praxisprojekt SS19/data/IKARion_CVK_Course_T1_T6_W_encoded.csv", row.names = F, fileEncoding = "WINDOWS-1252")
+```
+
