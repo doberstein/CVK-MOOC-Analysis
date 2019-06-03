@@ -51,6 +51,8 @@ start_activities$user_change <- F
 start_activities$idle_since <- 0
 start_activities <- addTask(start_activities)
 
+#write.csv2(start_activities, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/start_activities.csv", row.names = F)
+
 
 
 # start activities are diff between datasets
@@ -431,6 +433,35 @@ wordcounts_by_cluster <- wordcounts_memberships %>%
             average_zufried10 = mean(Zufried_10),
             average_gini = mean(gini_index)
             )
+
+
+# 
+# test <- wordcounts_memberships %>% 
+#   dplyr::group_by(membership_manual) %>% 
+#   # summarise(Kontrolle = nrow(condition == "Ko"))
+#   summarise(Ko = length(condition == "Ko"),
+#             M = length(condition == "M"),
+#             MG = length(condition == "MG"))
+
+conditional_membership <- wordcounts_memberships %>% 
+  group_by(membership_manual, condition) %>% 
+  tally()
+
+wordcounts_by_cluster$Ko_count <- 0
+wordcounts_by_cluster$M_count <- 0
+wordcounts_by_cluster$MG_count <- 0
+
+wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==1,]$Ko_count <- conditional_membership[conditional_membership$membership_manual == 1 & conditional_membership$condition == "Ko",]$n
+wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==1,]$M_count <- conditional_membership[conditional_membership$membership_manual == 1 & conditional_membership$condition == "M",]$n
+wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==1,]$MG_count <- conditional_membership[conditional_membership$membership_manual == 1 & conditional_membership$condition == "MG",]$n
+
+wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==2,]$Ko_count <- conditional_membership[conditional_membership$membership_manual == 2 & conditional_membership$condition == "Ko",]$n
+wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==2,]$M_count <- conditional_membership[conditional_membership$membership_manual == 2 & conditional_membership$condition == "M",]$n
+wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==2,]$MG_count <- conditional_membership[conditional_membership$membership_manual == 2 & conditional_membership$condition == "MG",]$n
+
+
+
+
 
 #write.csv2(wordcounts_by_cluster_sd, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/CKV analysis - sequence - survey/pamk_2_cluster_measures_sd.csv", row.names = F)
 
