@@ -1,0 +1,39 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(rpart)
+library(rpart.plot)
+library(dplyr)
+library(dmm)
+#library(RWeka)
+```
+
+```{r}
+data <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/CKV analysis - sequence - survey/decision_tree_table.csv", stringsAsFactors = F)
+
+names(data)
+```
+
+
+```{r}
+fit_class <- rpart(membership_manual ~ gap_count + coordination_count + gap_count_fh + coordination_count_fh, method = "class", data = data, control=rpart.control(minbucket=1, minsplit=1))
+
+fit_class <- rpart(membership_manual ~ gap_count + coordination_count, method = "class", data = data, control=rpart.control(minbucket=1, minsplit=1, cp=-1))
+rpart.plot(fit_class)
+
+
+fit_class <- rpart(membership_manual ~ gap_count_fh + coordination_count_fh, method = "class", data = data, control=rpart.control(minbucket=1, minsplit=1))
+rpart.plot(fit_class)
+
+fit_class <- rpart(membership_manual ~ gap_count_fh + coordination_count_fh, method = "class", data = data)
+rpart.plot(fit_class)
+```
+```{r}
+fit_reg <- rpart(wordcount ~ gap_count_fh + coordination_count_fh, method = "anova", data = data)
+rpart.plot(fit_reg)
+```
+
