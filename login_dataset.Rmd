@@ -1,0 +1,219 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(dplyr)
+library(jsonlite)
+library(magrittr)
+```
+user activity endpoint
+http://ikarion.collide.info:5000/user_model/user_actions/<course_id>/<user_id>/<verb>
+
+```{r}
+getData <- function(...) {
+  
+  paste("http://ikarion.collide.info:5000", ..., sep="/") %>%
+    URLencode %>%
+    #print() %>% 
+    fromJSON %>%
+    extract2("data")
+}
+
+replaceUrlChars <- function(string) {
+  string <- gsub("/", "$slash$", string)
+  string <- gsub("?", "$qmark$", string, fixed = T)
+}
+
+all_data <- data_frame()
+
+getUserActivities <- function(course_id, user_id, verb) {
+  data <- getData("user_model/user_actions", course_id, replaceUrlChars(user_id), verb)
+  if (length(data) > 0) {
+    data <- data %>% subset(select = -object_name)
+    all_data <<- rbind(all_data, data)
+  }
+}
+
+
+
+```
+
+
+getting user list for cvk course
+```{r}
+#http://ikarion.collide.info:5000/user_model/https:$slash$$slash$moodle.ikarion-projekt.de$slash$course$slash$view.php$qmark$id=11
+
+course_id <- "https:$slash$$slash$moodle.ikarion-projekt.de$slash$course$slash$view.php$qmark$id=11"
+login <- "https://brindlewaye.com/xAPITerms/verbs/loggedin/" %>% replaceUrlChars()
+view <- "http://id.tincanapi.com/verb/viewed" %>% replaceUrlChars()
+
+verb <- login
+
+users <- getData("user_model") %>% 
+  as_data_frame %>% 
+  rename(user_id = value)
+
+for (user in users$user_id) {
+  getUserActivities(course_id, user, verb)
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*** old stuff
+
+```{r}
+library(dplyr)
+library(jsonlite)
+library(magrittr)
+```
+user activity endpoint
+http://ikarion.collide.info:5000/user_model/user_actions/<course_id>/<user_id>/<verb>
+
+```{r}
+getData <- function(...) {
+  
+  paste("http://ikarion.collide.info:5000", ..., sep="/") %>%
+    URLencode %>%
+    #print() %>% 
+    fromJSON %>%
+    extract2("data")
+}
+
+replaceUrlChars <- function(string) {
+  string <- gsub("/", "$slash$", string)
+  string <- gsub("?", "$qmark$", string, fixed = T)
+}
+
+all_data <- data_frame()
+first_dataset <- data_frame()
+
+getUserActivities <- function(course_id, user_id, verb) {
+  #browser()
+  #data <- as.data.frame(getData("user_model/user_actions", course_id, user_id, verb))
+  #browser()
+  
+  data <- getData("user_model/user_actions", course_id, replaceUrlChars(user_id), verb)
+  #if (nrow(data) > 0) {
+  if (length(data) > 0) {
+  #if (!dim(data)[1] == 0) {
+    data <- data %>% subset(select = -object_name)
+    
+    all_data <<- rbind(all_data, data)
+  }
+  
+    
+  
+  #rownames(data) <- NULL
+  #rownames(all_data) <- NULL
+  #browser()
+  #
+  #first_dataset <<- data
+  #print(data)
+  #print(all_data)
+  #all_data <<- rbind(all_data, data)
+  
+  #browser()
+  
+}
+
+
+
+```
+
+
+getting user list for cvk course
+```{r}
+#http://ikarion.collide.info:5000/user_model/https:$slash$$slash$moodle.ikarion-projekt.de$slash$course$slash$view.php$qmark$id=11
+
+course_id <- "https:$slash$$slash$moodle.ikarion-projekt.de$slash$course$slash$view.php$qmark$id=11"
+login <- "https://brindlewaye.com/xAPITerms/verbs/loggedin/" %>% replaceUrlChars()
+view <- "http://id.tincanapi.com/verb/viewed" %>% replaceUrlChars()
+
+verb <- login
+
+for (user in users$user_id) {
+  getUserActivities(course_id, user, verb)
+}
+
+users <- getData("user_model") %>% 
+  as_data_frame %>% 
+  rename(user_id = value)
+
+%>% 
+  rowwise() %>% 
+  do(getUserActivities(course_id, replaceUrlChars(.$user_id), verb))# %>% ungroup()
+
+
+
+
+%>% 
+  rowwise() %>% 
+  do(getUserActivities(course_id, replaceUrlChars(.$user_id), verb)) %>% ungroup()
+
+
+
+#%>% 
+#    distinct(courseid, .keep_all = TRUE)
+```
+
+```{r}
+first_user <- users[1,]$user_id %>% replaceUrlChars()
+login <- "https://brindlewaye.com/xAPITerms/verbs/loggedin/" %>% replaceUrlChars()
+view <- "http://id.tincanapi.com/verb/viewed" %>% replaceUrlChars()
+
+# logins
+# http://ikarion.collide.info:5000/user_model/user_actions/https:$slash$$slash$moodle.ikarion-projekt.de$slash$course$slash$view.php$qmark$id=11/nlrrOSj7CO4Pk21IIcDnog==/https:$slash$$slash$brindlewaye.com$slash$xAPITerms$slash$verbs$slash$loggedin$slash$
+  
+# views
+http://ikarion.collide.info:5000/user_model/user_actions/https:$slash$$slash$moodle.ikarion-projekt.de$slash$course$slash$view.php$qmark$id=11/nlrrOSj7CO4Pk21IIcDnog==/http:$slash$$slash$id.tincanapi.com$slash$verb$slash$viewed
+  
+  
+```
+
+
+```{r}
+data1 <- getData("user_model/user_actions/https:$slash$$slash$moodle.ikarion-projekt.de$slash$course$slash$view.php$qmark$id=11/nlrrOSj7CO4Pk21IIcDnog==/https:$slash$$slash$brindlewaye.com$slash$xAPITerms$slash$verbs$slash$loggedin$slash$") 
+
+data1 <- getData("user_model/user_actions/https:$slash$$slash$moodle.ikarion-projekt.de$slash$course$slash$view.php$qmark$id=11", replaceUrlChars(users[1,]$user_id), "https:$slash$$slash$brindlewaye.com$slash$xAPITerms$slash$verbs$slash$loggedin$slash$") %>% 
+  subset(select = -object_name)
+
+data2 <- getData("user_model/user_actions/https:$slash$$slash$moodle.ikarion-projekt.de$slash$course$slash$view.php$qmark$id=11", replaceUrlChars(users[2,]$user_id), "https:$slash$$slash$brindlewaye.com$slash$xAPITerms$slash$verbs$slash$loggedin$slash$") %>% 
+  subset(select = -object_name)
+
+emp_data <- getData("user_model/user_actions/https:$slash$$slash$moodle.ikarion-projekt.de$slash$course$slash$view.php$qmark$id=11/EA12iYsCduiMrz+xSdFQjQ==/https:$slash$$slash$brindlewaye.com$slash$xAPITerms$slash$verbs$slash$loggedin$slash$")
+
+all_data <- bind_rows(data1, data2)
+
+data1[1,]$
+
+%>% 
+  as_data_frame
+```
