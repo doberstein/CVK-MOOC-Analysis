@@ -407,6 +407,8 @@ wordcounts_memberships <- full_join(wordcounts_memberships, gini_data_t2_t3)
 wordcounts_memberships$gap_count_fh <- str_count(wordcounts_memberships$named_sequences_fh, "gap")
 wordcounts_memberships$coordination_count_fh <- str_count(wordcounts_memberships$named_sequences_fh, "Coordination")
 
+#write.csv2(wordcounts_memberships, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/CKV analysis - sequence - survey/decision_tree_table.csv", row.names = F)
+
 
 wordcounts_by_cluster_sd <- wordcounts_memberships %>% 
   dplyr::group_by(membership_manual) %>% 
@@ -427,6 +429,7 @@ wordcounts_by_cluster <- wordcounts_memberships %>%
   dplyr::summarise(average_wordcount = mean(wordcount),
             average_gap_count = mean(gap_count),
             average_coordination_count = mean(coordination_count), 
+            average_activity_count = mean(activity_count),
             average_gap_count_fh = mean(gap_count_fh),
             average_coordination_count_fh = mean(coordination_count_fh),
             average_zufried09 = mean(Zufried_09), 
@@ -447,20 +450,27 @@ conditional_membership <- wordcounts_memberships %>%
   group_by(membership_manual, condition) %>% 
   tally()
 
+# sequences in cluster 1: 19
+nrow(wordcounts_memberships %>% filter(membership_manual == 1))
+
+# sequences in cluster 2: 10
+nrow(wordcounts_memberships %>% filter(membership_manual == 2))
+
+
 wordcounts_by_cluster$Ko_count <- 0
 wordcounts_by_cluster$M_count <- 0
 wordcounts_by_cluster$MG_count <- 0
 
-wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==1,]$Ko_count <- conditional_membership[conditional_membership$membership_manual == 1 & conditional_membership$condition == "Ko",]$n
-wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==1,]$M_count <- conditional_membership[conditional_membership$membership_manual == 1 & conditional_membership$condition == "M",]$n
-wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==1,]$MG_count <- conditional_membership[conditional_membership$membership_manual == 1 & conditional_membership$condition == "MG",]$n
+wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==1,]$Ko_count <- conditional_membership[conditional_membership$membership_manual == 1 & conditional_membership$condition == "Ko",]$n / 19
+wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==1,]$M_count <- conditional_membership[conditional_membership$membership_manual == 1 & conditional_membership$condition == "M",]$n / 19
+wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==1,]$MG_count <- conditional_membership[conditional_membership$membership_manual == 1 & conditional_membership$condition == "MG",]$n / 19
 
-wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==2,]$Ko_count <- conditional_membership[conditional_membership$membership_manual == 2 & conditional_membership$condition == "Ko",]$n
-wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==2,]$M_count <- conditional_membership[conditional_membership$membership_manual == 2 & conditional_membership$condition == "M",]$n
-wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==2,]$MG_count <- conditional_membership[conditional_membership$membership_manual == 2 & conditional_membership$condition == "MG",]$n
+wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==2,]$Ko_count <- conditional_membership[conditional_membership$membership_manual == 2 & conditional_membership$condition == "Ko",]$n / 10
+wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==2,]$M_count <- conditional_membership[conditional_membership$membership_manual == 2 & conditional_membership$condition == "M",]$n / 10
+wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==2,]$MG_count <- conditional_membership[conditional_membership$membership_manual == 2 & conditional_membership$condition == "MG",]$n / 10
 
 
-
+# write.csv2(wordcounts_by_cluster, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/CKV analysis - sequence - survey/pamk_2_cluster_measures.csv", row.names = F)
 
 
 #write.csv2(wordcounts_by_cluster_sd, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/CKV analysis - sequence - survey/pamk_2_cluster_measures_sd.csv", row.names = F)
@@ -473,114 +483,94 @@ wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==2,]$MG_count <- c
 
 AP CLUSTERING  
 ```{r}
-#relevant_actions <- c("start", "Coordination", "Monitoring ", "Major Contribution", "Other", "Minor Contribution", "None")
-relevant_actions_ap <- c("start", "Coordination", "Monitoring ", "Major Contribution", "Minor Contribution")
-# create state sequence object from all sequences
-sequences_ap <- seqdef(named_sequences)
-
-#calculate distances for
-#submat <- seqsubm(sequences, method="TRATE")
-submat_ap <- seqsubm(sequences, method="CONSTANT", cval = 1)
-submat_ap["gap->",paste(relevant_actions_ap, "->", sep="")] <- 2
-submat_ap[paste(relevant_actions_ap, "->", sep=""), "gap->"] <- 2
-distances_ap <<- seqdist(sequences, method = "OM", sm=submat)
-distances_manual_ap <<- distances_ap
-
-# apcluster works with a similarity matrix so we negate the distance 
-distances_ap <- apply(distances, MARGIN = c(1,2), function(x) x*(-1))
-
-
-
-
-# In R, it may be calculated:
+# #relevant_actions <- c("start", "Coordination", "Monitoring ", "Major Contribution", "Other", "Minor Contribution", "None")
+# relevant_actions_ap <- c("start", "Coordination", "Monitoring ", "Major Contribution", "Minor Contribution")
+# # create state sequence object from all sequences
+# sequences_ap <- seqdef(named_sequences)
 # 
-# For example, you have a matrix, saying A, which 200 * 300. [200 sequences, and each equence is presented by 300 features]
+# #calculate distances for
+# #submat <- seqsubm(sequences, method="TRATE")
+# submat_ap <- seqsubm(sequences, method="CONSTANT", cval = 1)
+# submat_ap["gap->",paste(relevant_actions_ap, "->", sep="")] <- 2
+# submat_ap[paste(relevant_actions_ap, "->", sep=""), "gap->"] <- 2
+# distances_ap <<- seqdist(sequences, method = "OM", sm=submat)
+# distances_manual_ap <<- distances_ap
 # 
-# library(fields)   # fast way to calculate the distance
-# 
-# dist <- (rdist(A))^2    # dist is 200 * 200 distance matrix
-# 
-# t <- mean(dist) 
-# 
-# simMat <- exp(-dist / (2 * t^2))
-# 
-# Maybe, here simMat is what you want.
-# 
-# Hope this help.
-
-#numClusters <- 2
-
-clusters_ap <- apcluster(distances_ap)
-
-clusters_ap@clusters
-
-
-transformClust <- 1:29
-transformClust[clusters_ap@clusters[[1]]] <- 1
-transformClust[clusters_ap@clusters[[2]]] <- 2
-transformClust[clusters_ap@clusters[[3]]] <- 3
-transformClust[clusters_ap@clusters[[4]]] <- 4
-transformClust[clusters_ap@clusters[[5]]] <- 5
-transformClust[clusters_ap@clusters[[6]]] <- 6
-transformClust[clusters_ap@clusters[[7]]] <- 7
-
-print(transformClust)
-
-numClusters <- 7
-clusterNames <- factor(transformClust, labels=paste("Type", 1:numClusters))
-
-diagram <- seqiplot(sequences, group = clusterNames, idxs = 40)
-
-
-diagram
-
-
-
-# clustersPamk <- pamk(distances, krange = numClusters, diss = TRUE, usepam = T)$pamobject$clustering
-# membership_manual <<- clustersPamk
-# 
-# # for pamk
-# clusterNames <- factor(clustersPamk, labels=paste("Type", 1:numClusters))
-# 
-# # print cluster statistics for pam clustering
-# print(cluster.stats(distances, clustersPamk, silhouette = T, G2 = T, G3 = T, wgap = T))
+# # apcluster works with a similarity matrix so we negate the distance 
+# distances_ap <- apply(distances, MARGIN = c(1,2), function(x) x*(-1))
 # 
 # 
-# #diagram <- seqiplot(sequences, group = clusterNames, cex.plot = 1, cex.legend = 2, axes = F, cols = 1)
+# 
+# 
+# # In R, it may be calculated:
+# # 
+# # For example, you have a matrix, saying A, which 200 * 300. [200 sequences, and each equence is presented by 300 features]
+# # 
+# # library(fields)   # fast way to calculate the distance
+# # 
+# # dist <- (rdist(A))^2    # dist is 200 * 200 distance matrix
+# # 
+# # t <- mean(dist) 
+# # 
+# # simMat <- exp(-dist / (2 * t^2))
+# # 
+# # Maybe, here simMat is what you want.
+# # 
+# # Hope this help.
+# 
+# #numClusters <- 2
+# 
+# clusters_ap <- apcluster(distances_ap)
+# 
+# clusters_ap@clusters
+# 
+# 
+# transformClust <- 1:29
+# transformClust[clusters_ap@clusters[[1]]] <- 1
+# transformClust[clusters_ap@clusters[[2]]] <- 2
+# transformClust[clusters_ap@clusters[[3]]] <- 3
+# transformClust[clusters_ap@clusters[[4]]] <- 4
+# transformClust[clusters_ap@clusters[[5]]] <- 5
+# transformClust[clusters_ap@clusters[[6]]] <- 6
+# transformClust[clusters_ap@clusters[[7]]] <- 7
+# 
+# print(transformClust)
+# 
+# numClusters <- 7
+# clusterNames <- factor(transformClust, labels=paste("Type", 1:numClusters))
+# 
 # diagram <- seqiplot(sequences, group = clusterNames, idxs = 40)
-
+# 
+# 
+# diagram
 
 ```
 
 K-MEANS CLUSTERING  
 ```{r}
-#relevant_actions <- c("start", "Coordination", "Monitoring ", "Major Contribution", "Other", "Minor Contribution", "None")
-relevant_actions_km <- c("start", "Coordination", "Monitoring ", "Major Contribution", "Minor Contribution")
-# create state sequence object from all sequences
-sequences_km <- seqdef(named_sequences)
-
-#calculate distances for
-#submat <- seqsubm(sequences, method="TRATE")
-submat_km <- seqsubm(sequences, method="CONSTANT", cval = 1)
-submat_km["gap->",paste(relevant_actions_km, "->", sep="")] <- 2
-submat_km[paste(relevant_actions_km, "->", sep=""), "gap->"] <- 2
-distances_km <<- seqdist(sequences, method = "OM", sm=submat)
-distances_manual_ap <<- distances_ap
-
-
-
-numClusters <- 2
-
-clusters <- kmeans(distances,numClusters, nstart = 100)
-
-clusterNames <- factor(clusters$cluster, labels=paste("Type", 1:numClusters))
-
-diagram <- seqiplot(sequences, group = clusterNames, idxs = 100)
-
-list(clustering=clusters, plot=diagram)
-
-
-
-
+# #relevant_actions <- c("start", "Coordination", "Monitoring ", "Major Contribution", "Other", "Minor Contribution", "None")
+# relevant_actions_km <- c("start", "Coordination", "Monitoring ", "Major Contribution", "Minor Contribution")
+# # create state sequence object from all sequences
+# sequences_km <- seqdef(named_sequences)
+# 
+# #calculate distances for
+# #submat <- seqsubm(sequences, method="TRATE")
+# submat_km <- seqsubm(sequences, method="CONSTANT", cval = 1)
+# submat_km["gap->",paste(relevant_actions_km, "->", sep="")] <- 2
+# submat_km[paste(relevant_actions_km, "->", sep=""), "gap->"] <- 2
+# distances_km <<- seqdist(sequences, method = "OM", sm=submat)
+# distances_manual_ap <<- distances_ap
+# 
+# 
+# 
+# numClusters <- 2
+# 
+# clusters <- kmeans(distances,numClusters, nstart = 100)
+# 
+# clusterNames <- factor(clusters$cluster, labels=paste("Type", 1:numClusters))
+# 
+# diagram <- seqiplot(sequences, group = clusterNames, idxs = 100)
+# 
+# list(clustering=clusters, plot=diagram)
 
 ```
