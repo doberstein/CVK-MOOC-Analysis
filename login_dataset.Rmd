@@ -14,7 +14,8 @@ http://ikarion.collide.info:5000/user_model/user_actions/<course_id>/<user_id>/<
 ```{r}
 getData <- function(...) {
   
-  paste("http://ikarion.collide.info:5000", ..., sep="/") %>%
+  #paste("http://ikarion.collide.info:5000", ..., sep="/") %>%
+  paste("http://descartes.inf.uni-due.de:5000", ..., sep="/") %>%
     URLencode %>%
     #print() %>% 
     fromJSON %>%
@@ -60,7 +61,70 @@ for (user in users$user_id) {
 }
 ```
 
+```{r}
+login_data <- all_data 
 
+login_data$date <- as.POSIXct(login_data$timestamp, origin="1970-01-01")
+
+# start + end timestamps
+task1_start <- 1539597600
+task1_end <- 1540767600
+
+task2_start <- 1540810800
+task2_end <- 1541977200
+
+task3_start <- 1542020400
+task3_end <- 1543186800
+
+# start + end timestamps
+task4_start <- 1542366000
+task4_end <- 1544396400
+
+task5_start <- 1544439600
+task5_end <- 1545606000
+
+task6_start <- 1546858800
+task6_end <- 1548025200
+
+
+login_data$task <- NA
+
+login_data$task[login_data$timestamp>task1_start & login_data$timestamp<task1_end] <- "task1"
+login_data$task[login_data$timestamp>task2_start & login_data$timestamp<task2_end] <- "task2"
+login_data$task[login_data$timestamp>task3_start & login_data$timestamp<task3_end] <- "task3"
+login_data$task[login_data$timestamp>task4_start & login_data$timestamp<task4_end] <- "task4"
+login_data$task[login_data$timestamp>task5_start & login_data$timestamp<task5_end] <- "task5"
+login_data$task[login_data$timestamp>task6_start & login_data$timestamp<task6_end] <- "task6"
+
+```
+
+```{r}
+
+all_groups_and_users_t1_3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/all_groups_and_users.csv", stringsAsFactors = F) %>% 
+  addTask()
+
+all_groups_and_users_t4_6 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/data filipa/data/all_groups_and_users_task4_6.csv", stringsAsFactors = F) %>% addTask()
+
+all_groups_and_users <- full_join(all_groups_and_users_t1_3, all_groups_and_users_t4_6)
+
+login_data <- merge(x = login_data, y = all_groups_and_users, by = c("user_id", "task"), all.x = T)
+#merge <- merge(x = merge, y = all_groups_and_users_t4_6, by = c("user_id", "task"), all.x = T)
+
+login_per_task <- login_data %>% 
+  group_by(user_id, task, group_id) %>% 
+  summarize(login_count = n())
+
+
+names(all_groups_and_users)
+
+test <- login_data %>% 
+  filter(!is.na(group_id))
+
+
+# write.csv2(login_per_task, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/login_per_task.csv", row.names = F)
+# write.csv2(login_data, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/login_dataset.csv", row.names = F)
+
+```
 
 
 
