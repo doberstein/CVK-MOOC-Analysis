@@ -1,0 +1,105 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+**Read the data**
+
+```{r}
+require(dplyr)
+require(magrittr)
+require(DT)
+require(tidyr)
+library(psych)
+
+data <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/CKV analysis - sequence - survey/decision_tree_table.csv", stringsAsFactors = F) 
+
+
+#%>% rename(cos_sim_rank=rank, cos_sim_norm_rank=norm.rank)
+names(data)
+```
+
+**Dependent varialbes: wordcount, zufried09, zufried10, gini**
+
+*1. ANOVA: Assuming homogeneous variances*
+
+Note: The variance homogenity precondition is not met since cluster 2 has a much higher variance in concept coverate than the other two.
+
+```{r}
+aov(wordcount ~ membership_manual, data=data) %>% summary
+```
+
+
+```{r}
+aov(Zufried_09 ~ membership_manual, data=data) %>% summary
+```
+```{r}
+aov(Zufried_10 ~ membership_manual, data=data) %>% summary
+```
+
+```{r}
+aov(gini_index ~ membership_manual, data=data) %>% summary
+```
+
+t-test
+```{r}
+#pairwise.t.test(data$, data$clustering_pam3_manual, p.adjust.method = "none")
+t.test(wordcount ~ membership_manual, data = data)
+```
+
+```{r}
+kruskal.test(wordcount ~ membership_manual, data = data)
+```
+
+```{r}
+data %>% group_by(membership_manual) %>% 
+  summarise(var_wordcount = sd(wordcount))
+
+data %>% 
+  filter(membership_manual == 1) %>% 
+  hist(.$wordcount)
+
+data1 <- data %>% 
+  filter(membership_manual == 1)
+
+hist(data1$wordcount,breaks = 20)
+
+data2 <- data %>% 
+  filter(membership_manual == 2)
+
+hist(data2$wordcount, breaks = 10)
+# hist(data$wordcount %>% filter(membership_manual  1))
+# 
+# class(data$membership_manual)
+```
+
+```{r}
+t.test(Zufried_09 ~ membership_manual, data = data)
+```
+```{r}
+t.test(Zufried_10 ~ membership_manual, data = data)
+```
+```{r}
+t.test(gini_index ~ membership_manual, data = data)
+```
+
+```{r}
+    
+data %>% subset(select = c(wordcount, Zufried_09, Zufried_10, gini_index, coordination_count_fh)) %>% 
+  as.matrix() %>% 
+  cor()
+    
+```
+
+```{r}
+lm(Zufried_09 ~ gini_index + coordination_count_fh, data = data) %>% summary
+
+lm(gini_index ~ coordination_count_fh, data = data) %>% summary
+```
+```{r}
+table(data$membership_manual, data$condition) %>% chisq.test()
+
+
+chisq.test()
+```
+
