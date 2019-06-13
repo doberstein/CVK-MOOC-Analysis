@@ -77,8 +77,8 @@ task3_start <- 1542020400
 task3_end <- 1543186800
 
 # start + end timestamps
-task4_start <- 1542366000
-task4_end <- 1544396400
+task4_start <- 1543230000
+task4_end <- 1544396700
 
 task5_start <- 1544439600
 task5_end <- 1545606000
@@ -120,9 +120,9 @@ names(all_groups_and_users)
 test <- login_data %>% 
   filter(!is.na(group_id))
 
-
-# write.csv2(login_per_task, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/login_per_task.csv", row.names = F)
-# write.csv2(login_data, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/login_dataset.csv", row.names = F)
+# 
+# write.csv2(login_per_task, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/login_per_task_2.csv", row.names = F)
+# write.csv2(login_data, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/login_dataset_2.csv", row.names = F)
 
 ```
 
