@@ -260,10 +260,13 @@ t6_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS1
 
 # UTC+1 (Winterzeit)
 # Task 4
-# task_start:   1542366000    (16.11.18 12:00 CEST)
+
+# task_start:   1543230000
+# task_start:   1543230000    (26.11.18 12:00 CEST)
 #               1543234405
 #               1544395887
-# task_end:     1544396400    (09.12.18 24:00 CEST)
+# task_end:     1544396700    (09.12.18 24:00 CEST)
+               
 
       
 # Task 5
@@ -285,17 +288,27 @@ t6_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS1
 ### HERE ###
 
 # start + end timestamps
-task1_start <- 1539597600
+task1_start <-  1539597600
+                1539597600
 task1_end <- 1540767600
 
-task2_start <- 1540810800
+task2_start <-  1540810800
+                1540810800
 task2_end <- 1541977200
 
-task3_start <- 1542020400
+task3_start <-  1542020400
+                1542020400
 task3_end <- 1543186800
 
 # start + end timestamps
-task4_start <- 1542366000
+               
+#******************************************
+# !!! FIXED START TIMESTAMP FOR TASK 4 !!!
+#******************************************
+
+#task4_start <-  1542366000
+task4_start <- 1543230000
+                
 task4_end <- 1544396400
 
 task5_start <- 1544439600
