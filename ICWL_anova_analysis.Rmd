@@ -10,7 +10,7 @@ require(dplyr)
 require(magrittr)
 require(DT)
 require(tidyr)
-library(psych)
+#library(psych)
 
 data <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/CKV analysis - sequence - survey/decision_tree_table.csv", stringsAsFactors = F) 
 
@@ -101,5 +101,16 @@ table(data$membership_manual, data$condition) %>% chisq.test()
 
 
 chisq.test()
+```
+
+```{r}
+wilcox.test(mpg ~ am, data=mtcars) 
+t.test(wordcount ~ membership_manual, data = data)
+
+wilcox.test(wordcount ~ membership_manual, data = data)
+wilcox.test(gini_index ~ membership_manual, data = data)
+wilcox.test(Zufried_10 ~ membership_manual, data = data)
+wilcox.test(Zufried_09 ~ membership_manual, data = data)
+
 ```
 
