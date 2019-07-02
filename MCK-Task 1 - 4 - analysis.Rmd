@@ -1,0 +1,88 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# compare self assessments
+```{r}
+t1_sa <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task1_self_assessments.csv", stringsAsFactors = F)
+t2_sa <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task2_self_assessments.csv", stringsAsFactors = F)
+t3_sa <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task3_self_assessments.csv", stringsAsFactors = F)
+t4_sa <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task4_self_assessments.csv", stringsAsFactors = F)
+
+all_self_assessments <- bind_rows(t1_sa, t2_sa, t3_sa, t4_sa)
+
+s_a <- all_self_assessments %>% 
+  group_by(group_id) %>% 
+  summarise(mean_item1 = mean(item1), sd_i1 = sd(item1),
+            mean_item2 = mean(item2), sd_i2 = sd(item2),
+            mean_item3 = mean(item3), sd_i3 = sd(item3))
+  
+```
+
+# compare final wiki wordcounts
+```{r}
+t1_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task1_activities.csv", stringsAsFactors = F)
+t2_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task2_activities.csv", stringsAsFactors = F)
+t3_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task3_activities.csv", stringsAsFactors = F)
+t4_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task4_activities.csv", stringsAsFactors = F)
+
+all_sequences <- bind_rows(t1_sequences, t2_sequences, t3_sequences, t4_sequences)
+
+
+wiki_wordcount <- all_sequences %>% 
+  filter(verb_id == "http://id.tincanapi.com/verb/updated") %>% 
+  group_by(group_id) %>% 
+  slice(c(n())) %>%
+  ungroup() %>% 
+  dplyr::rowwise() %>% 
+  mutate(wordcount = wordcount(content)) %>% 
+  MCKaddConditions()
+
+# mean(wiki_wordcount$wordcount)
+# median(wiki_wordcount$wordcount)
+# sd(wiki_wordcount$wordcount)
+
+
+wordcount_by_condition <- wiki_wordcount %>% 
+  group_by(condition) %>% 
+  summarise(average_wordcount = mean(wordcount), sd = sd(wordcount), max = max(wordcount), min = min(wordcount))
+```
+
+# compare gini
+```{r}
+t1_gini <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task1_work_imbalances.csv", stringsAsFactors = F)
+t2_gini <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task2_work_imbalances.csv", stringsAsFactors = F)
+t3_gini <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task3_work_imbalances.csv", stringsAsFactors = F)
+t4_gini <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task4_work_imbalances.csv", stringsAsFactors = F)
+
+all_gini <- bind_rows(t1_gini, t2_gini, t3_gini, t4_gini)
+
+gini_by_condition <- all_gini %>% 
+  group_by(condition) %>% 
+  summarise(average_gini = mean(gini_index), sd_gini = sd(gini_index))
+
+```
+
+# compare activity count
+```{r}
+t1_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task1_activities.csv", stringsAsFactors = F)
+t2_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task2_activities.csv", stringsAsFactors = F)
+t3_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task3_activities.csv", stringsAsFactors = F)
+t4_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task4_activities.csv", stringsAsFactors = F)
+
+all_sequences <- bind_rows(t1_sequences, t2_sequences, t3_sequences, t4_sequences)
+
+activity_count <- all_sequences %>% 
+  group_by(group_id) %>% 
+  summarise(activity_count = n()) %>% 
+  MCKaddConditions()
+
+activity_count_by_condition <- activity_count %>% 
+  group_by(condition) %>% 
+  summarise(average_activity_count = mean(activity_count), sd_activity_count = sd(activity_count))
+```
+
+
+
+
