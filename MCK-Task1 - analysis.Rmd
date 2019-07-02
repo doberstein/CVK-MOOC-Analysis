@@ -3,16 +3,150 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
-
 ```{r}
-plot(cars)
+source("setup.R")
+source("MCK-util.R")
+```
+###TODO for new task:
+####read new files
+####adjust condition information
+####adjust start date (task_begin <- as.Date(...))
+
+### READ DATA, GENERATE DATASET
+```{r}
+# ### ONCE ###
+# # complete final models with content for each condition
+# data_S <- fromJSON("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/Task 1/Task1_EA1_S_with_content.txt")
+# data_M <- fromJSON("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/Task 1/Task1_EA1_M_with_content.txt")
+# 
+# 
+# ### SEQUENCES ###
+# # unnest sequences from lists to data.frame
+# sequences_S <- data_S$group_sequences %>%
+#   unnest()
+# sequences_M <- data_M$group_sequences %>%
+#   unnest()
+# 
+# ## CLEANING DATASET SINCE THIS TASK WAS LOGGED ON THE THL IKARION SERVER WICH FOR WHATEVER REASON LOGGED SOME ACTIVITIES TWICE ##
+# ## (problem lies with the learning locker which forwards the actions twice)
+# 
+# sequences_S <- sequences_S %>% 
+#   distinct(content, .keep_all = T)
+# 
+# sequences_M <- sequences_M %>% 
+#   distinct(content, .keep_all = T)
+# 
+# 
+# #t11 <- distinct(sequences_S, content, .keep_all = T)
+# 
+# # combine all files to a single table
+# sequences <- bind_rows(list(sequences_S, sequences_M))
+# 
+# write.csv2(sequences, "/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task1_activities.csv", row.names = F)
+# 
+# ### WORK IMBALANCE ###
+# # extract work imbalances
+# work_imbalance_S <- data_S$work_imbalance
+# work_imbalance_M <- data_M$work_imbalance
+# 
+# # combine all files to a single table
+# work_imbalances <- bind_rows(list(work_imbalance_S, work_imbalance_M))
+# 
+# # adding condition information #
+# work_imbalances <- MCKaddConditions(work_imbalances)
+# 
+# write.csv2(work_imbalances, "/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task1_work_imbalances.csv", row.names = F)
+# 
+# ### FINAL WIKI weighted wordcounts ###
+# weighted_wordcount_wiki_S <- data_S$weighted_wiki_wordcount %>%
+#   unnest()
+# weighted_wordcount_wiki_M <- data_M$weighted_wiki_wordcount %>%
+#   unnest()
+# 
+# # combine all files to a single table
+# weighted_wiki_wordcounts <- bind_rows(list(weighted_wordcount_wiki_S, weighted_wordcount_wiki_M)) %>%
+#   MCKaddConditions()
+# 
+# write.csv2(weighted_wiki_wordcounts, "/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task1_weighted_wiki_wordcounts.csv", row.names = F)
+# 
+# ### FINAL Forum WORD COUNTS ###
+# wordcount_share_forum_S <- data_S$weighted_forum_wordcount %>%
+#   unnest()
+# wordcount_share_forum_M <- data_M$weighted_forum_wordcount %>%
+#   unnest()
+# 
+# # combine all files to a single table
+# forum_shares <- bind_rows(list(wordcount_share_forum_S, wordcount_share_forum_M)) %>%
+#   MCKaddConditions()
+# 
+# write.csv2(forum_shares, "/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task1_forum_shares.csv")
+# 
+# # extract groups and users
+# users_groups_S <- data_S$model_metadata$groups %>%
+#   unnest()
+# users_groups_M <- data_M$model_metadata$groups %>%
+#   unnest()
+# 
+# # combine all files to a single table
+# groups_and_users <- bind_rows(list(users_groups_S, users_groups_M)) %>%
+#   subset(select = c("group_id", "name"))
+# names(groups_and_users)[names(groups_and_users) == 'name'] <- 'user_id'
+# 
+# groups_and_users <- MCKaddConditions(groups_and_users)
+# 
+# 
+# write.csv2(groups_and_users, "/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task1_groups_and_users.csv")
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+### DATA PREPROCESSING: WIKI WORDCOUNT CALCULATION
+```{r}
+# ## ONCE ###
+# sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task1_activities.csv", stringsAsFactors = F) %>%
+#   rowwise() %>%
+#   mutate(content = gsub("\n", " ", content)) %>%  # delete newlines
+#   mutate(wordcount = wordcount(content))  # calculate wordcount
+# 
+# ### FORUM DATA ###
+# forum_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/replied")
+# 
+# ### WIKI DATA ###
+# 
+# wiki_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/updated") %>%
+#   group_by(group_id) %>%
+#   arrange(timestamp, .by_group = T) %>%
+#   mutate(textchange = wordcount - lag(wordcount)) # calculate textchange as difference between current and last revision
+# 
+# # correct value for first revisions (since textchange for first posts are "NA")
+# firstRevisions <- is.na(wiki_data$textchange)
+# wiki_data$textchange[firstRevisions] <- wiki_data$wordcount[firstRevisions]
+# 
+# # correct value for revisions that are shorter than the last on (change negative numbers to 0)
+# negativeWordcounts <- wiki_data$textchange < 0
+# length(which(negativeWordcounts[negativeWordcounts==TRUE]))
+# wiki_data$textchange[negativeWordcounts] <- 0
+# 
+# # replace 'wordcount' with 'textchange'
+# wiki_data <- wiki_data %>%
+#   subset(select = - wordcount)
+# 
+# names(wiki_data)[names(wiki_data) == 'textchange'] <- 'wordcount'
+# 
+# ### Analyze together ###
+# sequences2 <- bind_rows(list(forum_data, wiki_data)) %>%
+#   group_by(group_id) %>%
+#   arrange(timestamp, .by_group = T)
+# 
+# write.csv2(sequences2, "/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task1_activities.csv", row.names = F)
+```
+# get final self assessments
+```{r}
+### SELF ASSESSMENT ###
+self_assessnemt_M <- data_M$self_assessment %>% 
+  unnest() %>% 
+  MCKaddConditions() %>% 
+  MCKaddTask()
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+write.csv2(self_assessnemt_M, "/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task1_self_assessments.csv", row.names = F)
+```
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
