@@ -94,3 +94,16 @@ write.csv2(IKARion_CSK_data, "/home/doberstein/Dropbox/D/uni/Praxisprojekt SS19/
 write.csv2(IKARion_CSK_data, "/home/doberstein/Dropbox/D/uni/Praxisprojekt SS19/data/IKARion_CVK_Course_T1_T6_W_encoded.csv", row.names = F, fileEncoding = "WINDOWS-1252")
 ```
 
+all groups and users
+```{r}
+all_groups_and_users <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/all_groups_and_users.csv", stringsAsFactors = F)
+
+a_u_t1_3 <- all_groups_and_users_t1_3
+a_u_t4_6 <- all_groups_and_users_t4_6 %>% 
+  subset(select = -encoded_id)
+
+a_u <- bind_rows(a_u_t1_3, a_u_t4_6)
+
+write.csv2(a_u, "/home/doberstein/Dropbox/D/uni/Praxisprojekt SS19/data/IKARion_CVK_Course_Groups_Users.csv", row.names = F)
+```
+
