@@ -86,6 +86,8 @@ t.test(gini_index ~ membership_manual, data = data)
 names(data)
 ```
 
+### ICWL 2019 paper data for correlation here ###
+#################################################
 
 ```{r}
     
@@ -122,6 +124,12 @@ table(data$membership_manual, data$condition) %>% chisq.test()
 
 chisq.test()
 ```
+
+### ICWL 2019 significance tests here ###
+#########################################
+
+man whitney test since witha small sample size (29 groups) a normality of the distributions inside the clusters can not be guaranteed
+-> man whitney test works on ranks, which is less problematic for such a smaple size and distribution 
 
 ### Mann-Whitney Test ###
 #########################
