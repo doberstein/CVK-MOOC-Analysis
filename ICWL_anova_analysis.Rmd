@@ -82,12 +82,32 @@ t.test(Zufried_10 ~ membership_manual, data = data)
 ```{r}
 t.test(gini_index ~ membership_manual, data = data)
 ```
+```{r}
+names(data)
+```
+
 
 ```{r}
     
-data %>% subset(select = c(wordcount, Zufried_09, Zufried_10, gini_index, coordination_count_fh)) %>% 
-  as.matrix() %>% 
+data %>% subset(select = c(wordcount, Zufried_09, Zufried_10, gini_index, coordination_count_fh, coordination_count, gap_count, gap_count_fh)) %>%
+  as.matrix() %>%
   cor()
+
+cor.test(data$Zufried_09, data$gini_index, method = "spearman", exact = F)
+#cor.test(data$Zufried_09, data$gini_index, method = "pearson")
+#cor.test(data$Zufried_09, data$gini_index)
+
+cor.test(data$Zufried_10, data$gini_index, method = "spearman")
+
+cor.test(data$Zufried_09, data$wordcount, method = "spearman")
+cor.test(data$Zufried_10, data$wordcount, method = "spearman")
+cor.test(data$Zufried_10, data$gini_index, method = "spearman")
+=cor.test(data$Zufried_10, data$coordination_count, method = "spearman")
+
+cor.test(data$wordcount, data$gini_index, method = "spearman")
+
+
+cor.test(data$coordination_count_fh, data$wordcount, method = "spearman")
     
 ```
 
@@ -103,14 +123,28 @@ table(data$membership_manual, data$condition) %>% chisq.test()
 chisq.test()
 ```
 
+### Mann-Whitney Test ###
+#########################
 ```{r}
-wilcox.test(mpg ~ am, data=mtcars) 
-t.test(wordcount ~ membership_manual, data = data)
+#wilcox.test(mpg ~ am, data=mtcars) 
+#t.test(wordcount ~ membership_manual, data = data)
 
-wilcox.test(wordcount ~ membership_manual, data = data)
-wilcox.test(gini_index ~ membership_manual, data = data)
-wilcox.test(Zufried_10 ~ membership_manual, data = data)
+#wilcox.test(wordcount ~ membership_manual, data = data)
+#wilcox.test(gini_index ~ membership_manual, data = data)
+#wilcox.test(Zufried_10 ~ membership_manual, data = data)
 wilcox.test(Zufried_09 ~ membership_manual, data = data)
 
 ```
+
+*** signif. tests ***
+data:  wordcount by membership_manual
+W = 26, p-value = 0.0009205
+data:  Zufried_09 by membership_manual
+W = 34.5, p-value = 0.005729
+data:  Zufried_10 by membership_manual
+W = 39, p-value = 0.01065
+data:  gini_index by membership_manual
+W = 147, p-value = 0.01617
+*** ***
+
 
