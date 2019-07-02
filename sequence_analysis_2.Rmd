@@ -42,6 +42,8 @@ all_sequences_t4_t5_t6 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK 
 
 complete_data <- rbind(all_sequences_t1_t2_t3, all_sequences_t4_t5_t6)
 
+# fix start activities for task 4
+
 start_activities <- complete_data %>% 
   filter(user_id == "start")
 
@@ -198,8 +200,31 @@ print(cluster.stats(distances, clustersPamk, silhouette = T, G2 = T, G3 = T, wga
 
 
 #diagram <- seqiplot(sequences, group = clusterNames, cex.plot = 1, cex.legend = 2, axes = F, cols = 1)
-diagram <- seqiplot(sequences, group = clusterNames, idxs = 40)
+#png("/home/doberstein/Dropbox/D/uni/ICWL 2019/p/clustering7.png",  width = 800, height = 600)
+
+diagram <- seqiplot(sequences, group = clusterNames, idxs = 40, yaxis = F, space=0, cols = 1)
+
+# test cex.axis
+
+#diagram <- seqiplot(sequences, group = clusterNames, cex.plot = 1, cex.legend = 2, axes = F, cols = 1, idxs = 40)
+#while (!is.null(dev.list()))  dev.off()
+
 ```
+
+```{r}
+jpeg("diagram1.jpg")
+
+plot(diagram$plt)
+
+png(filename="/home/doberstein/Dropbox/D/uni/ICWL 2019/p/clustering1")
+  dev.off()
+  
+png("png1.png")
+diagram
+#dev.off()
+while (!is.null(dev.list()))  dev.off()
+```
+
 
 ```{r}
 groups_and_sequences <- data_frame(group_id = unique(classified_dataset_t2_t3$group_id), membership_manual, named_sequences)
@@ -574,3 +599,35 @@ K-MEANS CLUSTERING
 # list(clustering=clusters, plot=diagram)
 
 ```
+
+```{r}
+t1 <- complete_data_classified %>% 
+  filter(group_id == 162)
+```
+
+# test differences between the conditions
+```{r}
+t2 <- wordcounts_memberships %>% 
+  group_by(condition) %>% 
+  dplyr::summarise(average_wordcount = mean(wordcount), sd_wordcount = sd(wordcount),
+            average_gap_count = mean(gap_count), sd_gc = sd(gap_count),
+            average_coordination_count = mean(coordination_count), sd_cc = sd(coordination_count),
+            average_activity_count = mean(activity_count), sd_ac = sd(activity_count),
+            average_gap_count_fh = mean(gap_count_fh), sd_gc_fh = sd(gap_count_fh),
+            average_coordination_count_fh = mean(coordination_count_fh), sd_cc_fh = sd(coordination_count_fh),
+            average_zufried09 = mean(Zufried_09), sd_z09 = sd(Zufried_09),
+            average_zufried10 = mean(Zufried_10), sd_10 = sd(Zufried_10),
+            average_gini = mean(gini_index), sd_gini = sd(gini_index)
+            )
+
+wilcox.test(gini_index ~ condition, data = wordcounts_memberships)
+t.test(gini_index ~ condition, data = wordcounts_memberships)
+aov(gini_index ~ condition, data = wordcounts_memberships)
+kruskal.test(gini_index ~ condition, data = wordcounts_memberships)
+  
+```
+```{r}
+gini
+```
+
+
