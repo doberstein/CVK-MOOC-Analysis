@@ -3,6 +3,11 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+```{r}
+source("setup.R")
+```
+
+
 # compare self assessments
 ```{r}
 t1_sa <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task1_self_assessments.csv", stringsAsFactors = F)
@@ -17,6 +22,7 @@ s_a <- all_self_assessments %>%
   summarise(mean_item1 = mean(item1), sd_i1 = sd(item1),
             mean_item2 = mean(item2), sd_i2 = sd(item2),
             mean_item3 = mean(item3), sd_i3 = sd(item3))
+
   
 ```
 
@@ -32,12 +38,14 @@ all_sequences <- bind_rows(t1_sequences, t2_sequences, t3_sequences, t4_sequence
 
 wiki_wordcount <- all_sequences %>% 
   filter(verb_id == "http://id.tincanapi.com/verb/updated") %>% 
+  filter(!(group_id %in% c(368))) %>% 
   group_by(group_id) %>% 
   slice(c(n())) %>%
   ungroup() %>% 
   dplyr::rowwise() %>% 
   mutate(wordcount = wordcount(content)) %>% 
-  MCKaddConditions()
+  MCKaddConditions() %>% 
+  subset(select = -c(object_id, object_type,verb_id, user_id))
 
 # mean(wiki_wordcount$wordcount)
 # median(wiki_wordcount$wordcount)
