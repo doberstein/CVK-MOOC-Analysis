@@ -202,7 +202,7 @@ print(cluster.stats(distances, clustersPamk, silhouette = T, G2 = T, G3 = T, wga
 #diagram <- seqiplot(sequences, group = clusterNames, cex.plot = 1, cex.legend = 2, axes = F, cols = 1)
 #png("/home/doberstein/Dropbox/D/uni/ICWL 2019/p/clustering7.png",  width = 800, height = 600)
 
-diagram <- seqiplot(sequences, group = clusterNames, idxs = 40, yaxis = F, space=0, cols = 1)
+diagram <- seqiplot(sequences, group = clusterNames, idxs = 2, yaxis = F, space=0, cols = 1)
 
 # test cex.axis
 
@@ -626,8 +626,42 @@ aov(gini_index ~ condition, data = wordcounts_memberships)
 kruskal.test(gini_index ~ condition, data = wordcounts_memberships)
   
 ```
+analyse start of group work
 ```{r}
-gini
+group_start <- complete_data_classified
+
+first_1 <- complete_data_classified %>% 
+  filter(period <= 1)
+
+first_3 <- complete_data_classified %>% 
+  filter(period <= 3)
+
+first_5 <- complete_data_classified %>% 
+  filter(period <= 5)
+
+first_7 <- complete_data_classified %>% 
+  filter(period <= 7)
+
+first_14 <- complete_data_classified %>% 
+  filter(period <= 14)
+
+length(unique(group_start$group_id))
+
+length(unique(first_1$group_id))
+length(unique(first_3$group_id))
+length(unique(first_5$group_id))
+length(unique(first_7$group_id))
+
+group_192 <- comp
+
+
+
 ```
+83 groups overall
+11 start on first day
+37 start in first 3 days
+50 start in first 5 days
+56 start in first 7 days (first half of the task)
+
 
 
