@@ -1,0 +1,27 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+data <- c(98,43)
+data2 <- c(4,53)
+
+gini(data)
+gini(data2)
+
+# # calculate normalized gini coefficient for one group
+# gini(user_contribution7$char_count_sum)*length(user_contribution7$char_count_sum)/(length(user_contribution7$char_count_sum)-1)
+
+gini(data)*length(data)/(length(data)-1)
+gini(data2)*length(data2)/(length(data2)-1)
+
+s <- c(1,2,3)
+s2 <- c(3,4,5)
+toJSON(c(s,s2))
+
+
+data3 <- c(300,100,100,100)
+gini(data3)*length(data3)/(length(data3)-1)
+
+```
+
