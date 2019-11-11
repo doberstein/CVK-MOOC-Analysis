@@ -202,12 +202,14 @@ print(cluster.stats(distances, clustersPamk, silhouette = T, G2 = T, G3 = T, wga
 #diagram <- seqiplot(sequences, group = clusterNames, cex.plot = 1, cex.legend = 2, axes = F, cols = 1)
 #png("/home/doberstein/Dropbox/D/uni/ICWL 2019/p/clustering7.png",  width = 800, height = 600)
 
-diagram <- seqiplot(sequences, group = clusterNames, idxs = 2, yaxis = F, space=0, cols = 1)
+diagram <- seqiplot(sequences, group = clusterNames, idxs = 40, yaxis = F, space=0, cols = 1)
 
 # test cex.axis
 
 #diagram <- seqiplot(sequences, group = clusterNames, cex.plot = 1, cex.legend = 2, axes = F, cols = 1, idxs = 40)
 #while (!is.null(dev.list()))  dev.off()
+
+# write.csv2(distances_manual, "/home/doberstein/Desktop/CVK_T2_T3_distances.csv", row.names = F)
 
 ```
 
@@ -403,6 +405,9 @@ wordcounts_memberships$named_sequences_fh <- named_sequences_fh
 # # groups_and_sequences[4,]$group_id
 # # groups_and_sequences[4,]$membership_manual
 # # groups_and_sequences[4,]$named_sequences
+
+# data for sebastian
+# write.csv2(wordcounts_memberships, "/home/doberstein/Desktop/clusters_sequences.csv", row.names = F)
 
 ```
 

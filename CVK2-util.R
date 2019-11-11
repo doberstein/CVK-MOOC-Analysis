@@ -4,38 +4,26 @@ addConditionsCVK2 <- function(df) {
   if (nrow(df) > 0) {
     df$condition <- NA
     
+    # M_H:    493 - 498
+    # M_H_T:  500 - 505
+    # O_H:    486 - 491
+    
     # Task1
-    df$condition[df$group_id %in% c(154:159)] <- "Ko"
-    df$condition[df$group_id %in% c(160:165)] <- "M"
-    df$condition[df$group_id %in% c(166:171)] <- "MG"
-    df$condition[df$group_id %in% c(172:174)] <- "KR"
+    df$condition[df$group_id %in% c(493:498)] <- "M_H"
+    df$condition[df$group_id %in% c(500:505)] <- "M_H_T"
+    df$condition[df$group_id %in% c(486:491)] <- "O_H"
     
   }
   
   df
 }
 
-addTask <- function(df) {
+addTaskCVK2 <- function(df) {
   if (nrow(df) > 0) {
     df$task <- NA
     
     # Task1
-    df$task[df$group_id %in% c(154:174)] <- "task1"
-    
-    # Task2
-    df$task[df$group_id %in% c(187:202)] <- "task2"
-    
-    # Task3
-    df$task[df$group_id %in% c(211:224)] <- "task3"
-    
-    # Task4
-    df$task[df$group_id %in% c(230:242)] <- "task4"
-    
-    # Task5
-    df$task[df$group_id %in% c(247:259)] <- "task5"
-    
-    # Task6
-    df$task[df$group_id %in% c(265:277)] <- "task6"
+    df$task[df$group_id %in% c(486:505)] <- "task1"
   }
   
   df
