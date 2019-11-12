@@ -249,7 +249,7 @@ all_sequences %>%
   group_by(group_id) %>%
   do(addStartElement(.))
 
-write.csv2(all_sequences_with_start, "/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/t1_activities_with_start.csv", row.names = F)
+# write.csv2(all_sequences_with_start, "/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/t1_activities_with_start.csv", row.names = F)
 
 all_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/t1_activities_with_start.csv", stringsAsFactors = F) %>% addTaskCVK2()
 ```
@@ -297,6 +297,7 @@ wordcount_by_condition <- wiki_wordcount %>%
 
 wordcount_by_condition
 ```
+
 
 
 ```{r}
@@ -539,6 +540,92 @@ changing_activity_count <- addValues(changing_activity_count, activity_counts_da
 changing_activity_count <- addValues(changing_activity_count, activity_counts_day14, 14)
 
 # write.csv2(changing_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/task6_changing_activity_count.csv", row.names = F)
+```
+
+#wordcounts for each group after x days (for sebastian)
+```{r}
+# # for each group
+# group_word_counts_day1 <- wordcounts_day1%>% 
+#   group_by(group_id) %>% 
+#   summarise(group_wordcount = sum(wordcount))
+# 
+# group_word_counts_day2 <- wordcounts_day2%>% 
+#   group_by(group_id) %>% 
+#   summarise(group_wordcount = sum(wordcount))
+
+# average overall
+overall_average_wordcount_day1 <- all_wordcounts_day1 %>% 
+  group_by(group_id) %>% 
+  summarise(group_wordcount_day1 = sum(wordcount))
+
+overall_average_wordcount_day2 <- all_wordcounts_day2 %>% 
+  group_by(group_id) %>% 
+  summarise(group_wordcount_day2 = sum(wordcount))
+
+overall_average_wordcount_day3 <- all_wordcounts_day3 %>% 
+  group_by(group_id) %>% 
+  summarise(group_wordcount_day3 = sum(wordcount))
+
+overall_average_wordcount_day4 <- all_wordcounts_day4 %>% 
+  group_by(group_id) %>% 
+  summarise(group_wordcount_day4 = sum(wordcount))
+
+overall_average_wordcount_day5 <- all_wordcounts_day5 %>% 
+  group_by(group_id) %>% 
+  summarise(group_wordcount_day5 = sum(wordcount))
+
+overall_average_wordcount_day6 <- all_wordcounts_day6 %>% 
+  group_by(group_id) %>% 
+  summarise(group_wordcount_day6 = sum(wordcount))
+
+overall_average_wordcount_day7 <- all_wordcounts_day7 %>% 
+  group_by(group_id) %>% 
+  summarise(group_wordcount_day7 = sum(wordcount))
+
+overall_average_wordcount_day8 <- all_wordcounts_day8 %>% 
+  group_by(group_id) %>% 
+  summarise(group_wordcount_day8 = sum(wordcount))
+
+overall_average_wordcount_day9 <- all_wordcounts_day9 %>% 
+  group_by(group_id) %>% 
+  summarise(group_wordcount_day9 = sum(wordcount))
+
+overall_average_wordcount_day10 <- all_wordcounts_day10 %>% 
+  group_by(group_id) %>% 
+  summarise(group_wordcount_day10 = sum(wordcount))
+
+overall_average_wordcount_day11 <- all_wordcounts_day11 %>% 
+  group_by(group_id) %>% 
+  summarise(group_wordcount_day11 = sum(wordcount))
+
+overall_average_wordcount_day12 <- all_wordcounts_day12 %>% 
+  group_by(group_id) %>% 
+  summarise(group_wordcount_day12 = sum(wordcount))
+
+overall_average_wordcount_day13 <- all_wordcounts_day13 %>% 
+  group_by(group_id) %>% 
+  summarise(group_wordcount_day13 = sum(wordcount))
+
+overall_average_wordcount_day14 <- all_wordcounts_day14 %>% 
+  group_by(group_id) %>% 
+  summarise(group_wordcount_day14 = sum(wordcount))
+
+
+overall_wordcounts <- full_join(overall_average_wordcount_day1, overall_average_wordcount_day2) %>% 
+  full_join(overall_average_wordcount_day3) %>% 
+  full_join(overall_average_wordcount_day4) %>%
+  full_join(overall_average_wordcount_day5) %>%
+  full_join(overall_average_wordcount_day6) %>%
+  full_join(overall_average_wordcount_day7) %>%
+  full_join(overall_average_wordcount_day8) %>%
+  full_join(overall_average_wordcount_day9) %>%
+  full_join(overall_average_wordcount_day10) %>%
+  full_join(overall_average_wordcount_day11) %>%
+  full_join(overall_average_wordcount_day12) %>%
+  full_join(overall_average_wordcount_day13) %>%
+  full_join(overall_average_wordcount_day14)
+
+write.csv2(overall_wordcounts, "/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/task1_group_wordcounts.csv", row.names = F)
 ```
 ## ACTIVITY DISTRIBUTION OVER DAYS BY CONDITION
 ```{r}
