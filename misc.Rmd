@@ -20,7 +20,9 @@ s2 <- c(3,4,5)
 toJSON(c(s,s2))
 
 
-data3 <- c(300,100,100,100)
+data3 <- c(100,100,100,0)
+
+#gini(data3)
 gini(data3)*length(data3)/(length(data3)-1)
 
 ```
