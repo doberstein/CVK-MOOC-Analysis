@@ -37,9 +37,3 @@ fit_reg <- rpart(wordcount ~ gap_count_fh + coordination_count_fh, method = "ano
 rpart.plot(fit_reg)
 ```
 
-```{r}
-fit_class <- rpart(membership_manual ~ gap_count + coordination_count + gap_count_fh + coordination_count_fh, method = "class", data = data)
-
-rpart.plot(fit_class)
-```
-
