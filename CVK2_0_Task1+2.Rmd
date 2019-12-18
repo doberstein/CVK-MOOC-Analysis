@@ -1,0 +1,141 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# read activity sequences and parse dates
+```{r}
+all_sequences_t1 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/t1_activities_with_start.csv", stringsAsFactors = F) %>% addTaskCVK2()
+
+all_sequences_t2 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/t2_activities_with_start.csv", stringsAsFactors = F) %>% addTaskCVK2()
+
+all_sequences <- rbind(all_sequences_t1, all_sequences_t2)
+
+all_sequences$day <- as.Date(all_sequences$day, format = "%Y-%m-%d")
+```
+
+
+```{r}
+classified_dataset <- all_sequences %>% 
+  filter(!class %in% c("None", "Other"))
+```
+
+# generate activity sequences
+```{r}
+named_sequences <- c()
+
+generateSequence <- function(df) {
+  
+  gapTime <- 86400
+  sequence <- c()
+  
+  lastAction <- df[1,]$timestamp
+  sapply(1:nrow(df), function(i) {
+    
+    # calculate current gap
+    gap <- df[i,]$timestamp - lastAction
+    lastAction <<- df[i,]$timestamp
+    
+    # only if gap > specified time (gapTime), add gap to sequence
+    if (gap > gapTime) {
+      sequence <<- append(sequence, rep("gap", floor(gap / gapTime)))
+    }
+    
+    # always add next event to sequence
+    sequence <<- append(sequence, as.character(df[i,]$class))
+  })
+  
+  sequence <- paste(sequence, collapse = "-")
+  named_sequences <<- c(named_sequences, sequence)
+  
+  d <- data.frame() # to avoid error: "Error: Results 1, 2, 3, 4, 5, ... must be data frames, not character"
+  
+}
+
+classified_dataset %>% 
+  group_by(group_id) %>% 
+  do(generateSequence(.))
+```
+
+# calculate distances with optimal matching
+# clustering with pam
+```{r}
+relevant_actions <- c("start", "Coordination", "Monitoring", "Major Contribution", "Minor Contribution")
+
+# create state sequence object from all sequences
+sequences <- seqdef(named_sequences)
+
+#calculate distances for
+submat <- seqsubm(sequences, method="CONSTANT", cval = 1)
+submat["gap->",paste(relevant_actions, "->", sep="")] <- 2
+submat[paste(relevant_actions, "->", sep=""), "gap->"] <- 2
+distances <<- seqdist(sequences, method = "OM", sm=submat)
+distances_manual <<- distances
+
+numClusters <- 2
+
+clustersPamk <- pamk(distances, krange = numClusters, diss = TRUE, usepam = T)$pamobject$clustering
+membership_manual <<- clustersPamk
+
+# for pamk
+clusterNames <- factor(clustersPamk, labels=paste("Type", 1:numClusters))
+
+### print cluster statistics for pam clustering ### 
+# print(cluster.stats(distances, clustersPamk, silhouette = T, G2 = T, G3 = T, wgap = T))
+###
+
+### print clusters ###
+diagram <- seqiplot(sequences, group = clusterNames, cex.plot = 1, cols = 1)
+###
+
+#png("/home/doberstein/Dropbox/D/uni/ICWL 2019/p/clustering7.png",  width = 800, height = 600)
+
+#diagram <- seqiplot(sequences, group = clusterNames, cex.plot = 1, cex.legend = 2, axes = F, cols = 1, idxs = 40)
+#while (!is.null(dev.list()))  dev.off()
+
+# write.csv2(distances_manual, "/home/doberstein/Desktop/CVK_T2_T3_distances.csv", row.names = F)
+```
+
+```{r}
+groups_and_sequences <- data_frame(group_id = unique(classified_dataset$group_id), membership_manual, named_sequences)
+```
+
+# calculation for final wordcounts
+```{r}
+# final wordcount in wiki articles
+
+all_wiki_wordcounts <- classified_dataset %>%
+  filter(type == "wiki") %>% 
+  group_by(group_id) %>% 
+  slice(c(n())) %>%
+  ungroup() %>% 
+  rowwise() %>% 
+  mutate(wordcount = ngram::wordcount(content))
+```
+
+# calculate average stats for by cluster (word count, actuvity count, ...)
+```{r}
+# dataset with memberships and final wiki wordcounts
+
+wordcounts_memberships <- merge(x = groups_and_sequences, y = all_wiki_wordcounts, by = "group_id") %>% 
+  subset(select = c(group_id, membership_manual, content, named_sequences, wordcount, condition, day, period, task))
+
+wordcounts_memberships$gap_count <- str_count(wordcounts_memberships$named_sequences, "gap")
+wordcounts_memberships$coordination_count <- str_count(wordcounts_memberships$named_sequences, "Coordination")
+
+activity_counts <- classified_dataset%>% 
+  group_by(group_id) %>% 
+  summarise("activity_count" = n() - 1)
+
+wordcounts_memberships <- full_join(wordcounts_memberships, activity_counts)
+
+wordcounts_by_cluster <- wordcounts_memberships %>% 
+  group_by(membership_manual) %>% 
+  summarise(average_wordcount = mean(wordcount), 
+            sd_wordcount = sd(wordcount),
+            average_gap_count = mean(gap_count), 
+            sd_gap_count = sd(gap_count),
+            average_coordination_count = mean(coordination_count), 
+            sd_coordination_count = sd(coordination_count))
+
+```
