@@ -79,6 +79,13 @@ calculateActivityCount <- function(df) {
   df
 }
 
+calculateWordCount <- function(df) {
+  df <- df %>% 
+    group_by(group_id) %>% 
+    summarise(word_count = sum(wordcount))
+  df
+}
+
 # calculate activity count for each group for sub-sequence
 calculateUserActivityCount <- function(df) {
   df <- df %>% 
