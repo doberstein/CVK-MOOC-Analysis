@@ -5,6 +5,7 @@ output: html_notebook
 
 ```{r}
 source("setup.R")
+source("util.R")
 source("CVK2-util.R")
 ```
 
@@ -45,10 +46,14 @@ sequences_O_H <- sequences_O_H %>%
   distinct(content, .keep_all = T)
 
 
-# combine all files to a single table
-sequences <- bind_rows(list(sequences_M_H, sequences_M_H_T, sequences_O_H))
+# combine all files to a single table and filter wrong messages
+sequences <- bind_rows(list(sequences_M_H, sequences_M_H_T, sequences_O_H)) %>% 
+  filter(!content %like% "leider übersehen und konnte") %>%             #t1
+  filter(!content %like% "Dank und Ihnen auch schönes Wochenende") %>%  #t1
+  filter(!content %like% "bislang noch nicht den")                      #t1
 
-# write.csv2(sequences, "/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/task1_activities.csv", row.names = F)
+
+#write.csv2(sequences, "/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/task1_activities.csv", row.names = F)
 
 ### WORK IMBALANCE ###
 # extract work imbalances
@@ -62,7 +67,7 @@ work_imbalances <- bind_rows(list(work_imbalance_M_H, work_imbalance_M_H_T, work
 # adding condition information #
 work_imbalances <- addConditionsCVK2(work_imbalances)
 
-# write.csv2(work_imbalances, "/home/doberstein/Dropbox/D/uni/IKARion/MCK MOOC - SoSe19/analysis/task1_work_imbalances.csv", row.names = F)
+# write.csv2(work_imbalances, "/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/task1_work_imbalances.csv", row.names = F)
 
 ### FINAL WIKI weighted wordcounts ###
 weighted_wordcount_wiki_M_H <- data_M_H$weighted_wiki_wordcount %>%
@@ -123,7 +128,7 @@ forum_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/repl
 
 ### WIKI DATA ###
 
-wiki_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/updated")%>%
+wiki_data <- sequences %>% filter(verb_id == "http://id.tincanapi.com/verb/updated") %>%
   group_by(group_id) %>%
   arrange(timestamp, .by_group = T) %>%
   mutate(textchange = wordcount - lag(wordcount)) # calculate textchange as difference between current and last revision
@@ -218,8 +223,6 @@ names(task1_start_activity) <- col_names
 all_sequences_with_start <- data.frame()
 
 addStartElement <- function(df) {
-  
-  #browser()
 
   first_row <- df[1,]
   sequence <- rbind(first_row, df)
@@ -249,9 +252,12 @@ all_sequences %>%
   group_by(group_id) %>%
   do(addStartElement(.))
 
-# write.csv2(all_sequences_with_start, "/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/t1_activities_with_start.csv", row.names = F)
+#write.csv2(all_sequences_with_start, "/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/t1_activities_with_start.csv", row.names = F)
 
 all_sequences <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/t1_activities_with_start.csv", stringsAsFactors = F) %>% addTaskCVK2()
+
+all_sequences$day <- as.Date(all_sequences$day, format = "%Y-%m-%d")
+
 ```
 ### Average wordcount for wiki activities
 ```{r}
@@ -299,12 +305,10 @@ wordcount_by_condition
 ```
 
 
-
+# GINI INDEX OVER TIME
 ```{r}
 sequences <- all_sequences %>% 
   filter(!type == "start")
-
-### GINI INDEX OVER TIME
 
 # filter sub-sequences to only contain relevant activities (timewise)
 seq_day1 <- sequences %>% 
@@ -487,10 +491,11 @@ changing_gini <- addValues(changing_gini, gini_day14, 14)
 
 changing_gini <- addConditionsCVK2(changing_gini)
 
-# write.csv2(changing_gini, "/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/task1_changing_gini.csv", row.names = F)
+#write.csv2(changing_gini, "/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/task1_changing_gini.csv", row.names = F)
 
 ```
 
+### ACTIVITY COUNT OVER TIME
 ```{r}
 
 activity_counts_day1 <- calculateActivityCount(seq_day1) %>% 
@@ -539,10 +544,62 @@ changing_activity_count <- addValues(changing_activity_count, activity_counts_da
 changing_activity_count <- addValues(changing_activity_count, activity_counts_day13, 13)
 changing_activity_count <- addValues(changing_activity_count, activity_counts_day14, 14)
 
-# write.csv2(changing_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/task6_changing_activity_count.csv", row.names = F)
+#write.csv2(changing_activity_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/task1_changing_activity_count.csv", row.names = F)
 ```
 
-#wordcounts for each group after x days (for sebastian)
+### WORD COUNT OVER TIME
+```{r}
+
+word_counts_day1 <- calculateWordCount(seq_day1) %>% 
+  addConditionsCVK2()
+word_counts_day2 <- calculateWordCount(seq_day2) %>% 
+  addConditionsCVK2()
+word_counts_day3 <- calculateWordCount(seq_day3) %>% 
+  addConditionsCVK2()
+word_counts_day4 <- calculateWordCount(seq_day4) %>% 
+  addConditionsCVK2()
+word_counts_day5 <- calculateWordCount(seq_day5) %>% 
+  addConditionsCVK2()
+word_counts_day6 <- calculateWordCount(seq_day6) %>% 
+  addConditionsCVK2()
+word_counts_day7 <- calculateWordCount(seq_day7) %>% 
+  addConditionsCVK2()
+word_counts_day8 <- calculateWordCount(seq_day8) %>% 
+  addConditionsCVK2()
+word_counts_day9 <- calculateWordCount(seq_day9) %>% 
+  addConditionsCVK2()
+word_counts_day10 <- calculateWordCount(seq_day10) %>% 
+  addConditionsCVK2()
+word_counts_day11 <- calculateWordCount(seq_day11) %>% 
+  addConditionsCVK2()
+word_counts_day12 <- calculateWordCount(seq_day12) %>% 
+  addConditionsCVK2()
+word_counts_day13 <- calculateWordCount(seq_day13) %>% 
+  addConditionsCVK2()
+word_counts_day14 <- calculateWordCount(seq_day14) %>% 
+  addConditionsCVK2()
+
+changing_word_count <- word_counts_day1
+changing_word_count$period = 1
+
+changing_word_count <- addValues(changing_word_count, word_counts_day2, 2)
+changing_word_count <- addValues(changing_word_count, word_counts_day3, 3)
+changing_word_count <- addValues(changing_word_count, word_counts_day4, 4)
+changing_word_count <- addValues(changing_word_count, word_counts_day5, 5)
+changing_word_count <- addValues(changing_word_count, word_counts_day6, 6)
+changing_word_count <- addValues(changing_word_count, word_counts_day7, 7)
+changing_word_count <- addValues(changing_word_count, word_counts_day8, 8)
+changing_word_count <- addValues(changing_word_count, word_counts_day9, 9)
+changing_word_count <- addValues(changing_word_count, word_counts_day10, 10)
+changing_word_count <- addValues(changing_word_count, word_counts_day11, 11)
+changing_word_count <- addValues(changing_word_count, word_counts_day12, 12)
+changing_word_count <- addValues(changing_word_count, word_counts_day13, 13)
+changing_word_count <- addValues(changing_word_count, word_counts_day14, 14)
+
+# write.csv2(changing_word_count, "/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/task1_changing_word_count.csv", row.names = F)
+```
+
+#wordcounts for each group after x days
 ```{r}
 # # for each group
 # group_word_counts_day1 <- wordcounts_day1%>% 
@@ -625,7 +682,21 @@ overall_wordcounts <- full_join(overall_average_wordcount_day1, overall_average_
   full_join(overall_average_wordcount_day13) %>%
   full_join(overall_average_wordcount_day14)
 
-write.csv2(overall_wordcounts, "/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/task1_group_wordcounts.csv", row.names = F)
+
+# changing_activity_count <- activity_counts_day1
+# changing_activity_count$period = 1
+# 
+# changing_activity_count <- addValues(changing_activity_count, activity_counts_day2, 2)
+# changing_activity_count <- addValues(changing_activity_count, activity_counts_day3, 3)
+# changing_activity_count <- addValues(changing_activity_count, activity_counts_day4, 4)
+
+overall_wordcounts_timeslice <- overall_average_wordcount_day1 %>% 
+  addConditionsCVK2() %>% 
+  group_by(condition) %>% 
+  summarise(wordcount_day1 = sum(group_wordcount_day1))
+
+#write.csv2(overall_wordcounts, "/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/task1_group_wordcounts.csv", row.names = F)
+
 ```
 ## ACTIVITY DISTRIBUTION OVER DAYS BY CONDITION
 ```{r}
@@ -660,3 +731,21 @@ ggplot(work_distribution_for_condition, aes(x=period, y=average_gini, group=cond
   scale_x_continuous(breaks = c(1:14))
 
 ```
+## WORD COUNTS OVER DAYS BY CONDITION
+```{r}
+word_counts_for_condition <- changing_word_count %>% 
+  group_by(period) %>% 
+  group_by(condition, add = T) %>% 
+  summarise(accum_word_count = sum(word_count))
+```
+
+```{r}
+ggplot(word_counts_for_condition, aes(x=period, y=accum_word_count, group=condition)) +
+  geom_line(aes(color=condition))+
+  geom_point(aes(color=condition))+
+  #scale_x_continuous(labels = days, breaks = c(1:14))
+  scale_x_continuous(breaks = c(1:14))
+```
+
+
+
