@@ -1,0 +1,666 @@
+---
+title: "sequence_analysis_2"
+output: html_notebook
+---
+# This notebook contains the sequential analysis of group task 2 and 3 of the first IKARion CVK Course in Wintersemester 18/19 (group task 1 was removed due to some technical difficulties during the first two weeks)
+
+# The paths to the data files that are loaded (e.g. line 27, 32, 37, ...) need to be changed to the path for the current computer that the script is executed on
+
+## INSTALL LIBRARIES (ONCE)
+```{r}
+# example: 
+install.packages("dplyr") 
+# do the same for all necessary not yet installed libraries (ngram, dmm, ...)
+```
+
+```{r}
+#library(plyr)
+library(dplyr)
+library(ngram)
+library(dmm)
+library(TraMineR)
+library(fpc)
+library(anytime)
+library(stringr)
+library(apcluster)
+
+source("/home/doberstein/Dropbox/D/uni/IKARion/uebergabe/sebastian/util.R")
+```
+
+read hand classified data (without start activities)
+```{r}
+data_t1_3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/uebergabe/sebastian/IKARion - data - classified.csv", stringsAsFactors = F) %>% 
+  addTask()
+
+data_t1_3$day <- as.Date(data_t1_3$day, format = "%d.%m.%Y")
+
+data_t4_6 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/uebergabe/sebastian/IKARion - dataset2-classified.csv", stringsAsFactors = F)
+
+data_t4_6$day <- as.Date(data_t4_6$day, format = "%d.%m.%Y")
+
+complete_data_classified <- rbind(data_t1_3, data_t4_6) %>% 
+  subset(select = -X)
+
+```
+
+
+read unclassified data (including start activities)
+```{r}
+all_sequences_t1_t2_t3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/uebergabe/sebastian/t1_t2_t3_activities_with_start.csv", stringsAsFactors = F) %>% subset(select=-X)
+  
+all_sequences_t4_t5_t6 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/uebergabe/sebastian/t4_t5_t6_activities_with_start.csv", stringsAsFactors = F) %>% subset(select=-X) 
+
+complete_data <- rbind(all_sequences_t1_t2_t3, all_sequences_t4_t5_t6)
+
+# fix start activities for task 4
+
+start_activities <- complete_data %>% 
+  filter(user_id == "start")
+
+start_activities$position <- 0
+start_activities$tool_change <- F
+start_activities$user_change <- F
+start_activities$idle_since <- 0
+start_activities <- addTask(start_activities)
+
+#write.csv2(start_activities, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/analysis/start_activities.csv", row.names = F)
+
+
+
+# start activities are diff between datasets
+# diff_data <- anti_join(complete_data, complete_data_classified, by = c("group_id", "timestamp", "user_id"))
+```
+
+
+adding start activities to classified dataset
+```{r}
+classified_dataset <- rbind(complete_data_classified, start_activities) %>% 
+  group_by(group_id) %>% 
+  dplyr::arrange(timestamp, .by_group = T)
+
+```
+
+dataset for task2+3
+
+```{r}
+classified_dataset_t2_t3 <- classified_dataset %>% 
+  filter(task %in% c("task2", "task3")) %>% 
+  filter(!class %in% c("None", "Other"))
+
+
+
+
+# length(unique(classified_dataset_t2_t3$group_id))
+# 
+# unique(classified_dataset_t2_t3$class)
+# 
+# length(classified_dataset_t2_t3$class == "Monitoring ")
+# 
+# #TODO change "Monitoring " to "Monitoring"
+# classified_dataset_t2_t3[classified_dataset_t2_t3$class == "Monitoring "] <- "testvalue"
+# 
+# #TODO change "etherpad" to "wiki"
+# 
+# classified_dataset_t2_t3$type[classified_dataset_t2_t3$type == "etherpad", ] <- "wiki"
+# 
+# etherpad$wordcount_fixed[etherpad$wordcount_fixed < 0] <- -1
+# 
+# classified_dataset_t2_t3$type[classified_dataset_t2_t3$type == "etherpad", ] <- "wiki"
+# 
+# classified_dataset_t2_t3$class == "None"
+# 
+# length(classified_dataset_t2_t3[classified_dataset_t2_t3$class == "None"])
+# 
+# nones <- classified_dataset_t2_t3 %>% 
+#   filter(class == "None")
+# 
+# others <- classified_dataset_t2_t3 %>% 
+#   filter(class == "Other")
+
+
+```
+
+# generate activity sequences
+```{r}
+
+named_sequences <- c()
+
+
+generateSequence <- function(df) {
+  
+
+  gapTime <- 86400
+  
+  sequence <- c()
+    lastAction <- df[1,]$timestamp
+    sapply(1:nrow(df), function(i) {
+      
+      # calculate current gap
+      gap <- df[i,]$timestamp - lastAction
+      lastAction <<- df[i,]$timestamp
+      
+      # only if gap > specified time (gapTime), add gap to sequence
+      if (gap > gapTime) {
+        sequence <<- append(sequence, rep("gap", floor(gap / gapTime)))
+      }
+      
+      # always add next event to sequence
+      sequence <<- append(sequence, as.character(df[i,]$class))
+    })
+    
+    sequence <- paste(sequence, collapse = "-")
+    named_sequences <<- c(named_sequences, sequence)
+    
+    d <- data.frame() # to avoid error: "Error: Results 1, 2, 3, 4, 5, ... must be data frames, not character"
+    
+}
+
+
+classified_dataset_t2_t3 %>% 
+  group_by(group_id) %>% 
+  do(generateSequence(.))
+```
+
+
+
+
+```{r}
+# final wordcount in wiki articles
+
+all_wiki_wordcounts <- classified_dataset_t2_t3 %>%
+  filter(type == "etherpad") %>% 
+  group_by(group_id) %>% 
+  slice(c(n())) %>%
+  ungroup() %>% 
+  rowwise() %>% 
+  mutate(wordcount = ngram::wordcount(content))
+
+#s1 <- all_wiki_wordcounts[1,]$content
+
+#str_count(s1, "um")
+```
+
+# sequence analysis 
+# seqdef() converts the sequences to the right format
+# seqdist() calculates the pairwise distances based on "optimal matching"
+# pamk() generates the clusters based on the "Partitioning around medoids" method
+# for this dataset k=2 (2 clusters) was chosen as, k=3 results in a cluster containing only 1 sequence which makes general statements about sequences in the cluster less meaningfull
+```{r}
+#relevant_actions <- c("start", "Coordination", "Monitoring ", "Major Contribution", "Other", "Minor Contribution", "None")
+relevant_actions <- c("start", "Coordination", "Monitoring ", "Major Contribution", "Minor Contribution")
+# create state sequence object from all sequences
+sequences <- seqdef(named_sequences)
+
+#calculate distances for
+#submat <- seqsubm(sequences, method="TRATE")
+submat <- seqsubm(sequences, method="CONSTANT", cval = 1)
+submat["gap->",paste(relevant_actions, "->", sep="")] <- 2
+submat[paste(relevant_actions, "->", sep=""), "gap->"] <- 2
+distances <<- seqdist(sequences, method = "OM", sm=submat)
+distances_manual <<- distances
+
+numClusters <- 2
+
+clustersPamk <- pamk(distances, krange = numClusters, diss = TRUE, usepam = T)$pamobject$clustering
+membership_manual <<- clustersPamk
+
+# for pamk
+clusterNames <- factor(clustersPamk, labels=paste("Type", 1:numClusters))
+
+# print cluster statistics for pam clustering
+print(cluster.stats(distances, clustersPamk, silhouette = T, G2 = T, G3 = T, wgap = T))
+
+
+#diagram <- seqiplot(sequences, group = clusterNames, cex.plot = 1, cex.legend = 2, axes = F, cols = 1)
+#png("/home/doberstein/Dropbox/D/uni/ICWL 2019/p/clustering7.png",  width = 800, height = 600)
+
+diagram <- seqiplot(sequences, group = clusterNames, idxs = 40, yaxis = F, space=0, cols = 1)
+
+# test cex.axis
+
+#diagram <- seqiplot(sequences, group = clusterNames, cex.plot = 1, cex.legend = 2, axes = F, cols = 1, idxs = 40)
+#while (!is.null(dev.list()))  dev.off()
+
+# write.csv2(distances_manual, "/home/doberstein/Desktop/CVK_T2_T3_distances.csv", row.names = F)
+
+```
+
+```{r}
+# jpeg("diagram1.jpg")
+# 
+# plot(diagram$plt)
+# 
+# png(filename="/home/doberstein/Dropbox/D/uni/ICWL 2019/p/clustering1")
+#   dev.off()
+#   
+# png("png1.png")
+# diagram
+# #dev.off()
+# while (!is.null(dev.list()))  dev.off()
+```
+
+
+```{r}
+groups_and_sequences <- data_frame(group_id = unique(classified_dataset_t2_t3$group_id), membership_manual, named_sequences)
+
+# groups_and_sequences[4,]$group_id
+# groups_and_sequences[4,]$membership_manual
+# groups_and_sequences[4,]$named_sequences
+
+```
+
+```{r}
+# dataset with memberships and final wiki wordcounts
+
+wordcounts_memberships <- merge(x = groups_and_sequences, y = all_wiki_wordcounts, by = "group_id") %>% 
+  subset(select = c(group_id, membership_manual, content, named_sequences, wordcount, condition, day, period, task))
+
+wordcounts_memberships$gap_count <- str_count(wordcounts_memberships$named_sequences, "gap")
+wordcounts_memberships$coordination_count <- str_count(wordcounts_memberships$named_sequences, "Coordination")
+
+
+
+activity_counts <- classified_dataset_t2_t3 %>% 
+  group_by(group_id) %>% 
+  summarise("activity_count" = n() - 1)
+
+wordcounts_memberships <- full_join(wordcounts_memberships, activity_counts)
+
+wordcounts_by_cluster <- wordcounts_memberships %>% 
+  group_by(membership_manual) %>% 
+  summarise(average_wordcount = mean(wordcount), sd_wordcount = sd(wordcount),
+            average_gap_count = mean(gap_count), sd_gap_count = sd(gap_count),
+            average_coordination_count = mean(coordination_count), sd_coordination_count = sd(coordination_count))
+
+```
+
+### ANALYSIS FOR FIRST HALF ###
+###############################
+
+
+count coordination and gaps in first half:
+```{r}
+classified_dataset_t2_t3_fh <- classified_dataset %>% 
+  filter(task %in% c("task2", "task3")) %>% 
+  filter(!class %in% c("None", "Other")) %>% 
+  filter(period <= 7)
+```
+
+adding "half time activities" that show when 1/2 of the task duration is over for gaps/coodination in first half calculation
+```{r}
+half_time_activities <- start_activities %>% 
+  filter(task %in% c("task2", "task3"))
+half_time_activities$content <- "half_time"
+half_time_activities$object_id <- "half_time"
+half_time_activities$object_name <- "half_time"
+half_time_activities$object_type <- "half_time"
+half_time_activities$user_id <- "half_time"
+half_time_activities$verb_id <- "half_time"
+half_time_activities$wordcount <- 0
+half_time_activities$period <- 7
+half_time_activities$class <- "half_time"
+half_time_activities$position <- 0 
+half_time_activities$tool_change <- F
+half_time_activities$user_change <- F
+half_time_activities$idle_since <- 0 
+half_time_activities$type <- "half_time"
+
+# add 7 days to (unix) timestamp
+half_time_activities$timestamp <- half_time_activities$timestamp + (60*60*24*7)
+half_time_activities$day <- as.Date(half_time_activities$day) +7
+
+###################################################################################################
+###################################################################################################
+# careful! plyr rbind.fill in currently used as rbind creates a large list instead of concatenating dataframes
+
+
+#library(plyr)
+
+
+
+
+
+classified_dataset_t2_t3_fh <- bind_rows(classified_dataset_t2_t3_fh, half_time_activities) %>% 
+  group_by(group_id) %>% 
+  dplyr::arrange(timestamp, .by_group = T)
+
+# names(classified_dataset_t2_t3_fh)
+# names(half_time_activities)
+# 
+# unique(classified_dataset_t2_t3_fh$group_id)
+# unique(half_time_activities$group_id)
+
+
+# typeof(as.Date(half_time_activities[1,]$day))
+# 
+# as.Date(half_time_activities[1,]$day)
+# as.Date(half_time_activities[1,]$day)+7
+
+
+```
+
+
+```{r}
+  
+named_sequences_fh <- c()
+
+
+generateSequence_fh <- function(df) {
+  
+
+  gapTime <- 86400
+  
+  sequence <- c()
+    lastAction <- df[1,]$timestamp
+    sapply(1:nrow(df), function(i) {
+      
+      # calculate current gap
+      gap <- df[i,]$timestamp - lastAction
+      lastAction <<- df[i,]$timestamp
+      
+      # only if gap > specified time (gapTime), add gap to sequence
+      if (gap > gapTime) {
+        sequence <<- append(sequence, rep("gap", floor(gap / gapTime)))
+      }
+      
+      # always add next event to sequence
+      sequence <<- append(sequence, as.character(df[i,]$class))
+    })
+    
+    sequence <- paste(sequence, collapse = "-")
+    named_sequences_fh <<- c(named_sequences_fh, sequence)
+    
+    d <- data.frame() # to avoid error: "Error: Results 1, 2, 3, 4, 5, ... must be data frames, not character"
+    
+}
+
+
+classified_dataset_t2_t3_fh %>% 
+  group_by(group_id) %>% 
+  do(generateSequence_fh(.))
+
+```
+
+```{r}
+wordcounts_memberships$named_sequences_fh <- named_sequences_fh
+# 
+# # wordcounts_memberships$named_sequences_fh[wordcounts_memberships$named_sequences_fh == "start", ] <- "test123"
+# 
+# for (i in 1:nrow(wordcounts_memberships)) {
+#   if(wordcounts_memberships[i,]$named_sequences_fh == "start") {
+#     #print(wordcounts_memberships[i,])
+#     wordcounts_memberships[i,]$named_sequences_fh <- "start-gap-gap-gap-gap-gap-gap-gap"
+#   }
+# }
+# #groups_and_sequences <- data_frame(group_id = unique(classified_dataset_t2_t3_fh$group_id), membership_manual, named_sequences)
+# 
+# # groups_and_sequences[4,]$group_id
+# # groups_and_sequences[4,]$membership_manual
+# # groups_and_sequences[4,]$named_sequences
+
+# data for sebastian
+# write.csv2(wordcounts_memberships, "/home/doberstein/Desktop/clusters_sequences.csv", row.names = F)
+
+```
+
+
+adding survey results for cluster evaluation
+```{r}
+survey_data_t2_t3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/uebergabe/sebastian/group_survey_data_t2_t3", stringsAsFactors = F)
+
+wordcounts_memberships <- full_join(wordcounts_memberships, survey_data_t2_t3)
+```
+
+adding gini for cluster evaluation
+```{r}
+gini_data_t2_t3 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/uebergabe/sebastian/gini_t2_t3", stringsAsFactors = F)
+
+wordcounts_memberships <- full_join(wordcounts_memberships, gini_data_t2_t3)
+```
+
+
+
+```{r}
+# dataset with memberships and final wiki wordcounts
+
+# wordcounts_memberships <- merge(x = groups_and_sequences, y = all_wiki_wordcounts, by = "group_id") %>% 
+#   subset(select = c(group_id, membership_manual, content, named_sequences, wordcount, condition, day, period, task))
+
+wordcounts_memberships$gap_count_fh <- str_count(wordcounts_memberships$named_sequences_fh, "gap")
+wordcounts_memberships$coordination_count_fh <- str_count(wordcounts_memberships$named_sequences_fh, "Coordination")
+
+#write.csv2(wordcounts_memberships, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/CKV analysis - sequence - survey/decision_tree_table.csv", row.names = F)
+
+
+wordcounts_by_cluster_sd <- wordcounts_memberships %>% 
+  dplyr::group_by(membership_manual) %>% 
+  dplyr::summarise(average_wordcount = mean(wordcount), sd_wordcount = sd(wordcount),
+            average_gap_count = mean(gap_count), sd_gc = sd(gap_count),
+            average_coordination_count = mean(coordination_count), sd_cc = sd(coordination_count),
+            average_activity_count = mean(activity_count), sd_ac = sd(activity_count),
+            average_gap_count_fh = mean(gap_count_fh), sd_gc_fh = sd(gap_count_fh),
+            average_coordination_count_fh = mean(coordination_count_fh), sd_cc_fh = sd(coordination_count_fh),
+            average_zufried09 = mean(Zufried_09), sd_z09 = sd(Zufried_09),
+            average_zufried10 = mean(Zufried_10), sd_10 = sd(Zufried_10),
+            average_gini = mean(gini_index), sd_gini = sd(gini_index)
+            )
+
+
+wordcounts_by_cluster <- wordcounts_memberships %>% 
+  dplyr::group_by(membership_manual) %>% 
+  dplyr::summarise(average_wordcount = mean(wordcount),
+            average_gap_count = mean(gap_count),
+            average_coordination_count = mean(coordination_count), 
+            average_activity_count = mean(activity_count),
+            average_gap_count_fh = mean(gap_count_fh),
+            average_coordination_count_fh = mean(coordination_count_fh),
+            average_zufried09 = mean(Zufried_09), 
+            average_zufried10 = mean(Zufried_10),
+            average_gini = mean(gini_index)
+            )
+
+
+# 
+# test <- wordcounts_memberships %>% 
+#   dplyr::group_by(membership_manual) %>% 
+#   # summarise(Kontrolle = nrow(condition == "Ko"))
+#   summarise(Ko = length(condition == "Ko"),
+#             M = length(condition == "M"),
+#             MG = length(condition == "MG"))
+
+conditional_membership <- wordcounts_memberships %>% 
+  group_by(membership_manual, condition) %>% 
+  tally()
+
+# sequences in cluster 1: 19
+nrow(wordcounts_memberships %>% filter(membership_manual == 1))
+
+# sequences in cluster 2: 10
+nrow(wordcounts_memberships %>% filter(membership_manual == 2))
+
+
+wordcounts_by_cluster$Ko_count <- 0
+wordcounts_by_cluster$M_count <- 0
+wordcounts_by_cluster$MG_count <- 0
+
+wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==1,]$Ko_count <- conditional_membership[conditional_membership$membership_manual == 1 & conditional_membership$condition == "Ko",]$n / 19
+wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==1,]$M_count <- conditional_membership[conditional_membership$membership_manual == 1 & conditional_membership$condition == "M",]$n / 19
+wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==1,]$MG_count <- conditional_membership[conditional_membership$membership_manual == 1 & conditional_membership$condition == "MG",]$n / 19
+
+wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==2,]$Ko_count <- conditional_membership[conditional_membership$membership_manual == 2 & conditional_membership$condition == "Ko",]$n / 10
+wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==2,]$M_count <- conditional_membership[conditional_membership$membership_manual == 2 & conditional_membership$condition == "M",]$n / 10
+wordcounts_by_cluster[wordcounts_by_cluster$membership_manual==2,]$MG_count <- conditional_membership[conditional_membership$membership_manual == 2 & conditional_membership$condition == "MG",]$n / 10
+
+
+# write.csv2(wordcounts_by_cluster, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/CKV analysis - sequence - survey/pamk_2_cluster_measures.csv", row.names = F)
+
+
+#write.csv2(wordcounts_by_cluster_sd, "/home/doberstein/Dropbox/D/uni/IKARion/CVK MOOC - WS18_19/CKV analysis - sequence - survey/pamk_2_cluster_measures_sd.csv", row.names = F)
+
+```
+
+
+
+
+
+AP CLUSTERING  
+```{r}
+# #relevant_actions <- c("start", "Coordination", "Monitoring ", "Major Contribution", "Other", "Minor Contribution", "None")
+# relevant_actions_ap <- c("start", "Coordination", "Monitoring ", "Major Contribution", "Minor Contribution")
+# # create state sequence object from all sequences
+# sequences_ap <- seqdef(named_sequences)
+# 
+# #calculate distances for
+# #submat <- seqsubm(sequences, method="TRATE")
+# submat_ap <- seqsubm(sequences, method="CONSTANT", cval = 1)
+# submat_ap["gap->",paste(relevant_actions_ap, "->", sep="")] <- 2
+# submat_ap[paste(relevant_actions_ap, "->", sep=""), "gap->"] <- 2
+# distances_ap <<- seqdist(sequences, method = "OM", sm=submat)
+# distances_manual_ap <<- distances_ap
+# 
+# # apcluster works with a similarity matrix so we negate the distance 
+# distances_ap <- apply(distances, MARGIN = c(1,2), function(x) x*(-1))
+# 
+# 
+# 
+# 
+# # In R, it may be calculated:
+# # 
+# # For example, you have a matrix, saying A, which 200 * 300. [200 sequences, and each equence is presented by 300 features]
+# # 
+# # library(fields)   # fast way to calculate the distance
+# # 
+# # dist <- (rdist(A))^2    # dist is 200 * 200 distance matrix
+# # 
+# # t <- mean(dist) 
+# # 
+# # simMat <- exp(-dist / (2 * t^2))
+# # 
+# # Maybe, here simMat is what you want.
+# # 
+# # Hope this help.
+# 
+# #numClusters <- 2
+# 
+# clusters_ap <- apcluster(distances_ap)
+# 
+# clusters_ap@clusters
+# 
+# 
+# transformClust <- 1:29
+# transformClust[clusters_ap@clusters[[1]]] <- 1
+# transformClust[clusters_ap@clusters[[2]]] <- 2
+# transformClust[clusters_ap@clusters[[3]]] <- 3
+# transformClust[clusters_ap@clusters[[4]]] <- 4
+# transformClust[clusters_ap@clusters[[5]]] <- 5
+# transformClust[clusters_ap@clusters[[6]]] <- 6
+# transformClust[clusters_ap@clusters[[7]]] <- 7
+# 
+# print(transformClust)
+# 
+# numClusters <- 7
+# clusterNames <- factor(transformClust, labels=paste("Type", 1:numClusters))
+# 
+# diagram <- seqiplot(sequences, group = clusterNames, idxs = 40)
+# 
+# 
+# diagram
+
+```
+
+K-MEANS CLUSTERING  
+```{r}
+# #relevant_actions <- c("start", "Coordination", "Monitoring ", "Major Contribution", "Other", "Minor Contribution", "None")
+# relevant_actions_km <- c("start", "Coordination", "Monitoring ", "Major Contribution", "Minor Contribution")
+# # create state sequence object from all sequences
+# sequences_km <- seqdef(named_sequences)
+# 
+# #calculate distances for
+# #submat <- seqsubm(sequences, method="TRATE")
+# submat_km <- seqsubm(sequences, method="CONSTANT", cval = 1)
+# submat_km["gap->",paste(relevant_actions_km, "->", sep="")] <- 2
+# submat_km[paste(relevant_actions_km, "->", sep=""), "gap->"] <- 2
+# distances_km <<- seqdist(sequences, method = "OM", sm=submat)
+# distances_manual_ap <<- distances_ap
+# 
+# 
+# 
+# numClusters <- 2
+# 
+# clusters <- kmeans(distances,numClusters, nstart = 100)
+# 
+# clusterNames <- factor(clusters$cluster, labels=paste("Type", 1:numClusters))
+# 
+# diagram <- seqiplot(sequences, group = clusterNames, idxs = 100)
+# 
+# list(clustering=clusters, plot=diagram)
+
+```
+
+```{r}
+t1 <- complete_data_classified %>% 
+  filter(group_id == 162)
+```
+
+# test differences between the conditions
+```{r}
+t2 <- wordcounts_memberships %>% 
+  group_by(condition) %>% 
+  dplyr::summarise(average_wordcount = mean(wordcount), sd_wordcount = sd(wordcount),
+            average_gap_count = mean(gap_count), sd_gc = sd(gap_count),
+            average_coordination_count = mean(coordination_count), sd_cc = sd(coordination_count),
+            average_activity_count = mean(activity_count), sd_ac = sd(activity_count),
+            average_gap_count_fh = mean(gap_count_fh), sd_gc_fh = sd(gap_count_fh),
+            average_coordination_count_fh = mean(coordination_count_fh), sd_cc_fh = sd(coordination_count_fh),
+            average_zufried09 = mean(Zufried_09), sd_z09 = sd(Zufried_09),
+            average_zufried10 = mean(Zufried_10), sd_10 = sd(Zufried_10),
+            average_gini = mean(gini_index), sd_gini = sd(gini_index)
+            )
+
+wilcox.test(gini_index ~ condition, data = wordcounts_memberships)
+t.test(gini_index ~ condition, data = wordcounts_memberships)
+aov(gini_index ~ condition, data = wordcounts_memberships)
+kruskal.test(gini_index ~ condition, data = wordcounts_memberships)
+
+
+  
+```
+analyse start of group work (complete dataset)
+```{r}
+group_start <- complete_data_classified
+
+first_1 <- complete_data_classified %>% 
+  filter(period <= 1)
+
+first_3 <- complete_data_classified %>% 
+  filter(period <= 3)
+
+first_5 <- complete_data_classified %>% 
+  filter(period <= 5)
+
+first_7 <- complete_data_classified %>% 
+  filter(period <= 7)
+
+first_14 <- complete_data_classified %>% 
+  filter(period <= 14)
+
+length(unique(group_start$group_id))
+
+length(unique(first_1$group_id))
+length(unique(first_3$group_id))
+length(unique(first_5$group_id))
+length(unique(first_7$group_id))
+
+group_192 <- comp
+
+
+
+```
+83 groups overall
+11 start on first day
+37 start in first 3 days
+50 start in first 5 days
+56 start in first 7 days (first half of the task)
+
+
+
