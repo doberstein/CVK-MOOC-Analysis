@@ -1,0 +1,43 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+find posts
+last performed: 21.11.19 11:40
+newest post:
+
+  Abmeldung aus dem Kurs
+  Annalena Lemke
+  So, 10. Nov 2019, 18:22
+  
+```{r}
+# delete posts
+both <- rbind(sequences_t1, sequences_t2)
+
+found <- both %>% 
+  #filter(content %like% "muss nicht mehr am") %>%                      #t2
+  #filter(content %like% "das Datum für die Klausur") %>%               #t2 
+  #filter(content %like% "funktioniert mein Link") %>%                  #t2
+  #filter(content %like% "leider übersehen und konnte") %>%             #t1
+  #filter(content %like% "Dank und Ihnen auch schönes Wochenende") %>%  #t1 
+  #filter(content %like% "bislang noch nicht den") %>%                  #t1
+
+  addTaskCVK2()
+
+
+```
+
+dataset filipa
+```{r}
+t1 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/t1_activities_with_start.csv", stringsAsFactors = F) %>% 
+  subset(select = -c(class, wordcount))
+
+write.csv2(t1, "/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/CvK_WS_19_20_group_task_1_activities.csv", row.names = F)
+
+t2 <- read.csv2("/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/t2_activities_with_start.csv", stringsAsFactors = F) %>% 
+  subset(select = -c(class, wordcount))
+
+write.csv2(t2, "/home/doberstein/Dropbox/D/uni/IKARion/CVK 2_0/analysis/CvK_WS_19_20_group_task_2_activities.csv", row.names = F)
+```
+
